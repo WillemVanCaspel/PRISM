@@ -1,6 +1,6 @@
 # PRISM
 
-This repository contains the source code for the Primitive Equations In Spectral coordinates Model (PRISM) tidal and planetary wave model. The fortran77 source code is organized in the /source directory, and useful Python scripts for input and output processing are located in the /pyscripts directory. 
+This repository contains the source code for the Primitive Equations In Spectral coordinates Model (PRISM) tidal and planetary wave model. The fortran77 source code is organized in the /source directory, while useful Python scripts for input and output processing are located in the /pyscripts directory. 
 
 PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background meteorological nudging capability, and its flexible specification of thermal and gravitational tidal forcing terms. 
 
