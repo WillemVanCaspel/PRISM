@@ -1,12 +1,12 @@
 # PRISM
 
-This repository contains the source code for the Primitive Equations In Spectral coordinates Model (PRISM) tidal and planetary wave model. The fortran77 source code is organized in the /source directory, while useful Python scripts for input and output processing are located in the /pyscripts directory. 
+This repository contains the source code for the Primitive Equations In Spectral coordinates Model (PRISM) tidal and planetary wave model. The core Fortran77 code is organized in the /source directory, while useful Python scripts for input and output processing are located in the /pyscripts directory. 
 
-PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background atmosphere nudging capabilities, and its flexible specification of thermal and gravitational tidal forcing terms. 
+PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background atmospheric nudging capabilities, and its flexible specification of thermal and gravitational tidal forcing terms. 
 
-The current version of the model has been tested to run using the gfortran compiler, but past versions have also been compiled using the xxx compiler. Commands specific to running the model using gfortran (e.g., compiler flags) are described in source/runmod.sh file. Running the auxiliary .py scripts requires Python 3+ to be installed along with the list of dependencies described in the pyscripts/dependencies.txt file. 
+The current version of the model has been tested using the gfortran compiler, but past versions have also been successfully compiled using the xxx compiler. Commands specific to running the model using gfortran (e.g., compiler flags) are included in the source/runmod.sh file. Running the auxiliary .py scripts requires any version of Python to be installed, along with the dependencies described in pyscripts/dependencies.txt. 
 
-Once the configuration file source/input.ini has been set up, the model can be run using the following set (in sequence) of commands:
+Once the configuration file source/input.ini has been set up, the model can be run using the following set of commands:
 
 - make clean
 - compile
