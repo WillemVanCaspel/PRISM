@@ -18,7 +18,7 @@ Once the configuration file (source/input.ini) has been set up, the model can be
 - compile
 - sbash modrun.sh
 
-A more comprehensive tutorial on how to run and configure the model using simplified (dummy) input files is given in the tutorial.md file in the source directory.  
+A more comprehensive tutorial on how to run and configure the model using simplified (dummy) input files is given in the README.md file in the tutorial directory.  
 
 Relevant literature
 -----------------------------------
