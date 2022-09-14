@@ -18,7 +18,7 @@ Once the configuration file (source/input.ini) has been set up by the user, the 
 - compile
 - sbash modrun.sh
 
-By default, simulation results will be sent to the output directory. A more comprehensive tutorial on how to run and configure the model using simplified (dummy) input files is given in the tutorial.txt file in the main directory.  
+A more comprehensive tutorial on how to run and configure the model using simplified (dummy) input files is given in the tutorial.txt file in the main directory.  
 
 Relevant literature
 -----------------------------------
