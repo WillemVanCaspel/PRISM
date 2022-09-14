@@ -1,8 +1,4 @@
-TITLE
------
+Main driver
+-----------
 
-INPUT
------
 
-OUTPUT
-------
