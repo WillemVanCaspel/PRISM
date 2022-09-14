@@ -6,7 +6,9 @@ PRISM has been used primarily for the simulation of upper atmospheric global-sca
 
 The current version of the model has been tested using the gfortran compiler, but past versions have also been compiled successfully using the PGI compiler. Commands specific to running the model using gfortran (e.g., compiler flags) are included in the source/runmod.sh file. Running the auxiliary .py scripts requires any version of Python 3 to be installed, along with the dependencies described in pyscripts/dependencies.txt. 
 
-Clone repository link. 
+```bash
+git clone -b master git@github.com:WillemVanCaspel/PRISM.git
+```
 
 Once the configuration file source/input.ini has been set up by the user, the model can be run using the following set of commands:
 
