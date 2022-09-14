@@ -23,3 +23,4 @@ A more comprehensive tutorial on how to run and configure the model using simpli
 Relevant literature
 -----------------------------------
 
+ van Caspel, W. E., Espy, P. J., Ortland, D. A., & Hibbins, R. E. (2022). The mid- to high-latitude migrating semidiurnal tide: Results from a mechanistic tide model and SuperDARN observations. Journal of Geophysical Research: Atmospheres, 127, e2021JD036007. https://doi.org/10.1029/2021JD036007 
