@@ -4,7 +4,7 @@ This repository contains the source code for the Primitive Equations In Spectral
 
 PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background atmospheric nudging capabilities, and its flexible specification of thermal and gravitational tidal forcing terms. 
 
-The current version of the model has been tested using the gfortran compiler, but past versions have also been successfully compiled using the PGI compiler. Commands specific to running the model using gfortran (e.g., compiler flags) are included in the source/runmod.sh file. Running the auxiliary .py scripts requires any version of Python 3 to be installed, along with the dependencies described in pyscripts/dependencies.txt. 
+The current version of the model has been tested using the gfortran compiler, but past versions have also been compiled successfully using the PGI compiler. Commands specific to running the model using gfortran (e.g., compiler flags) are included in the source/runmod.sh file. Running the auxiliary .py scripts requires any version of Python 3 to be installed, along with the dependencies described in pyscripts/dependencies.txt. 
 
 Clone repository link. 
 
