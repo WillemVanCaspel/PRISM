@@ -20,7 +20,8 @@ def hwm_msise_uvtp(date,
                    alt,
                    lats,
                    lons,
-                   folder):
+                   folder,
+                   use_clim=False):
     
     """
     Function reads f107a, f107 and ap from file based on DOY. Calculates
@@ -53,7 +54,9 @@ def hwm_msise_uvtp(date,
     doy = (date - datetime(2008,1,1,0)).days
     
     # read in f10.7 from file based on input date
-    if alt <= 80:
+    if alt <= 80:   # the models use climatological values below this altitude
+        f107a, f107, ap = (150,150,4)
+    elif use_clim: 
         f107a, f107, ap = (150,150,4)
     else:
         # f10.7 and (derived) f10.7A
