@@ -177,7 +177,8 @@ for day_step in range(length):
                                      item,
                                      lats,
                                      lons,
-                                     folder)
+                                     folder,
+                                     use_clim=False)
             
             output_t[0,t_step,index,:,:] = u
             output_t[1,t_step,index,:,:] = v
