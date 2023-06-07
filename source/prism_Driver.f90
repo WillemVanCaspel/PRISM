@@ -7,7 +7,7 @@
               use Declarations_mod
               use Prognos_sigma_mod
               use Config_mod,           only: Config_Constants
-              use IO_mod,               only: INIPRE_READ
+              use IO_mod,               only: inialt_read, init_1d_damp, inittem
         
               IMPLICIT NONE
         
@@ -45,8 +45,8 @@
               INTEGER NSTEP, NSKIP, ZLUN
               INTEGER TRMM, TIDE, ERATIDE
         
-              REAL HCOOL, CMAM_KZZ
-              EXTERNAL  HCOOL, CMAM_KZZ
+              REAL CMAM_KZZ
+              EXTERNAL  CMAM_KZZ
         
               REAL Z
               INTEGER BRECL, ZLVLS
@@ -66,7 +66,7 @@
               INTEGER TROPINDEX, STRATINDEX
               REAL BFAC, ROBRAMP, ROBINIT
               
-              REAL ZS(L1MAX)
+              REAL*4 ZS(L1MAX)
         
         !   Damping and clamping coefficient profiles
               REAL WDAMP(L1MAX), MDAMP(L1MAX), TDIFF(L1MAX)
@@ -188,127 +188,102 @@
               CALL Config_Constants()
 
         !   Initialize pressure-level values and compute pressure level thicknesses
-              IF (DZ0 .EQ. 0.) THEN
-                CALL INIPRE_READ(PTHICK, PP, PHALFL, PBOT, PLID, NLEV)
+              IF (DZ0 .EQ. 0.) THEN ! DZ0 should probably be removed
+                CALL INIALT_READ(PTHICK, PP, ZS, PHALFL, PBOT, PLID, NLEV)
               ENDIF
+
+              ! 1D Rayleigh friction and Newtonian cooling profiles
+              CALL INIT_1D_DAMP(UDAMP, TDAMP, AMPBOT, DAYINV, NFAC, NLEV, PP, PBOT)
               
-        ! !   read in exact (hydrostatic) geometric altitude lvls 
-        !       ZLUN = 27
-        !       OPEN(ZLUN,FILE=TRIM(INFOLD)//TRIM(INITZGRID),STATUS='OLD',
-        !      1    SHARED,FORM='UNFORMATTED',ACCESS='DIRECT',RECL=100)
-        
-        !       READ (ZLUN,REC=1) RECLEN,ZLVLS
-        !       CLOSE(ZLUN)
-                         
-        !       BRECL=ZLVLS*4 + 8
-                    
-        !       OPEN(ZLUN,FILE=TRIM(INFOLD)//TRIM(INITZGRID),STATUS='OLD',
-        !      1    SHARED,FORM='UNFORMATTED',ACCESS='DIRECT',RECL=BRECL)
-        
-        !       READ (ZLUN,REC=2) RECLEN,(ZS(L),L=1,ZLVLS)
-        !       CLOSE(ZLUN)
-              
-        ! !   Rayleigh surface friction and Newtonian cooling profiles
-        !       DO L=1, NLEV
-        !         Z=PP(L)/PBOT ! sigma-coordinates
-                
-        !         IF (Z .GT. 0.7) THEN
-        !            UDAMP(L)= AMPBOT * DAYINV * (0.7 - Z) / (0.7 - 1.0)
-        !         ENDIF
-                
-        ! !     standard newtonian cooling profile
-        !         TDAMP(L) = NFAC * HCOOL(PP(L)) * DAYINV 
-        !       ENDDO
-              
-        ! !   Specified dynamics truncated at MMAX if input trunc exceeds MMAX
-        !       READ(5,*) SDTRUNC, DAMPTRUNC
-        !       IF (SDTRUNC .GT. MMAX) THEN
-        !         SDTRUNC = MMAX
-        !       ENDIF
-        !       WRITE(6,*) 'Specified Dynamics truncated at M =', SDTRUNC, DAMPTRUNC
+        !   Specified dynamics truncated at MMAX if input trunc exceeds MMAX
+              READ(5,*) SDTRUNC, DAMPTRUNC
+              IF (SDTRUNC .GT. MMAX) THEN
+                SDTRUNC = MMAX
+              ENDIF
+              WRITE(6,*) 'Specified Dynamics truncated at M =', SDTRUNC, DAMPTRUNC
                           
-        ! !   Lower sponge - clamp mean winds and temps. Allow for separate weights and layer top
-        ! 	  ALPHA0=ALPHA0*DAYINV
-        !       ALPHA1=ALPHA1*DAYINV
+              !   Lower sponge - clamp mean winds and temps. Allow for separate weights and layer top
+        	  ALPHA0=ALPHA0*DAYINV
+              ALPHA1=ALPHA1*DAYINV
         
-        !       DO L=1,NLEV
-        !         Z=-7.*ALOG(PP(L)/1.E5)
-        !         ALPHAT(L)=ALPHA0*(1.-TANH((Z-TTOP)/3.))/2. 
-        !         ALPHAW(L)=ALPHA1*(1.-TANH((Z-WTOP)/3.))/2. 
-        !       ENDDO
+              DO L=1,NLEV
+                Z=-7.*ALOG(PP(L)/1.E5)
+                ALPHAT(L)=ALPHA0*(1.-TANH((Z-TTOP)/3.))/2. 
+                ALPHAW(L)=ALPHA1*(1.-TANH((Z-WTOP)/3.))/2. 
+              ENDDO
         
-        ! !   wdamp damps waves, mdamp relaxes mean vorticity to VOR0 above WLEV
-        !       WRITE(6,*) WAMP, WAMP, WAMP
-        !       WRITE(6,*), WWID, WWID, WWID
-        !       WRITE(6,*) WLEV
+        !   wdamp damps waves, mdamp relaxes mean vorticity to VOR0 above WLEV
+              WRITE(6,*) WAMP, WAMP, WAMP
+              WRITE(6,*), WWID, WWID, WWID
+              WRITE(6,*) WLEV
               
-        ! 	  WAMP=WAMP*DAYINV
-        !       WAMP=2.5e-4  ! 2.5e-4 for Hong and Lindzen solar maximum conditions
-        !       SMAX=SMAX*DAYINV
-        !       SMIN=SMIN*DAYINV
-        !       AMPBOT=AMPBOT*DAYINV
+        	  WAMP=WAMP*DAYINV
+              WAMP=2.5e-4  ! 2.5e-4 for Hong and Lindzen solar maximum conditions
+              SMAX=SMAX*DAYINV
+              SMIN=SMIN*DAYINV
+              AMPBOT=AMPBOT*DAYINV
                     
-        ! !   upper sponge layer
-        !       DO L=1,NLEV
-        !         Z = ZS(L) 
+        !   upper sponge layer
+              DO L=1,NLEV
+                Z = ZS(L) 
         
-        !         IF (Z .GT. 110) THEN
-        !           STEMP = MAX(1e-4 * TANH((Z - 110) / 40), (1.+TANH((Z-WLEV)/WWID))*WAMP/2.)
-        ! !        TDAMP(L)=TDAMP(L) + (1. + TANH((Z-WLEV)/WWID))*WAMP/2.  !+ 0.05*DAYINV
-        !         ELSE
-        !           STEMP = 0.
-        !         ENDIF
+                IF (Z .GT. 110) THEN
+                  STEMP = MAX(1e-4 * TANH((Z - 110) / 40), (1.+TANH((Z-WLEV)/WWID))*WAMP/2.)
+        !        TDAMP(L)=TDAMP(L) + (1. + TANH((Z-WLEV)/WWID))*WAMP/2.  !+ 0.05*DAYINV
+                ELSE
+                  STEMP = 0.
+                ENDIF
                 
                                 
-        !         IF (STEMP .GT. SMAX) STEMP = SMAX
-        !         IF (STEMP .LT. SMIN) STEMP = 0.
+                IF (STEMP .GT. SMAX) STEMP = SMAX
+                IF (STEMP .LT. SMIN) STEMP = 0.
                 
-        !         WDAMP(L)=STEMP
+                WDAMP(L)=STEMP
                         
-        !         ALPHAW(L)=MAX(ALPHAW(L),WDAMP(L))
-        !         ALPHAT(L)=MAX(ALPHAT(L),WDAMP(L))
+                ALPHAW(L)=MAX(ALPHAW(L),WDAMP(L))
+                ALPHAT(L)=MAX(ALPHAT(L),WDAMP(L))
                 
-        !         TDAMP(L)=TDAMP(L) + (1. + TANH((Z-WLEV)/WWID))*WAMP/2.  !+ 0.05*DAYINV
+                TDAMP(L)=TDAMP(L) + (1. + TANH((Z-WLEV)/WWID))*WAMP/2.  !+ 0.05*DAYINV
                 
-        !         MDAMP(L)=0
+                MDAMP(L)=0
                              
-        !         WDAMP(L)=WDAMP(L) !+ 0.05*DAYINV
-        !         MDAMP(L)=WDAMP(L) 
+                WDAMP(L)=WDAMP(L) !+ 0.05*DAYINV
+                MDAMP(L)=WDAMP(L) 
                 
-        !         Z1= 12.0 * 7.0
-        !         Z2= 13.3 * 7.0
-        !         ETA0= 2.18e-5 * 0.0
-        !         A1= 4.0 * 7.0
-        !         A2= 2.0 * 7.0
+                Z1= 12.0 * 7.0
+                Z2= 13.3 * 7.0
+                ETA0= 2.18e-5 * 0.0
+                A1= 4.0 * 7.0
+                A2= 2.0 * 7.0
                 
-        !         IF (Z .LE. Z1) THEN
-        !           ANDREWS = ETA0*EXP(-((Z - Z1)/A1)**2)
-        !         ELSE
-        !           IF (Z .LE. Z2) THEN
-        !             ANDREWS = ETA0
-        !           ELSE
-        !             ANDREWS = ETA0*EXP(-((Z - Z2)/A2)**2) 
-        !           ENDIF
-        !         ENDIF
+                IF (Z .LE. Z1) THEN
+                  ANDREWS = ETA0*EXP(-((Z - Z1)/A1)**2)
+                ELSE
+                  IF (Z .LE. Z2) THEN
+                    ANDREWS = ETA0
+                  ELSE
+                    ANDREWS = ETA0*EXP(-((Z - Z2)/A2)**2) 
+                  ENDIF
+                ENDIF
                 
-        !         UDAMP(L)= UDAMP(L) + ANDREWS
-        !       ENDDO
+                UDAMP(L)= UDAMP(L) + ANDREWS
+              ENDDO
               
-        ! !    WDAMP(1) = 25 * DAYINV
+        !    WDAMP(1) = 25 * DAYINV
         
-        !       DEL8DF= DAYINV / FLOAT(NMAX*(NMAX+1))**4 * DAMP8 ! Horiz diffusion coef
+              DEL8DF= DAYINV / FLOAT(NMAX*(NMAX+1))**4 * DAMP8 ! Horiz diffusion coef
         
-        ! !   Vertical grid stuff (output is in common blocks defined in MGRID.INC)
-        !       SFRIC = SFRIC*DAYINV
-        !       CALL VERINI
-        !      1  (NLEV, PTHICK, PHALFL, PP, DEL8DF, TDAMP, UDAMP, SFRIC)
+        !   Vertical grid stuff (output is in common blocks defined in MGRID.INC)
+              SFRIC = SFRIC*DAYINV
+              CALL VERINI (NLEV, PTHICK, PHALFL, PP, DEL8DF, TDAMP, UDAMP, SFRIC)
+
         
-        ! !   Compute standard atmospheric mean and radiative equilibrium temperature profiles
-        !       CALL INITTEM(TZMEAN, TRADEQ)
+        !   Compute standard atmospheric mean and radiative equilibrium temperature profiles
+              CALL INITTEM(TZMEAN, TRADEQ)
         
-        ! !   Background eddy diffusion and molecular diffusion profiles
-        !       WRITE(6,*) '      z','  vervis ',' diffc ','    udamp ',' tdamp ',
-        !      1    '  wdamp ','   mdamp',  '  alphaw ',  ' alphat '
+        !   Background eddy diffusion and molecular diffusion profiles
+              WRITE(6,*) '      z','  vervis ',' diffc ','    udamp ',' tdamp ', &
+                 '  wdamp ','   mdamp',  '  alphaw ',  ' alphat '
                   
         !       DO L=1,NLEV
         !         Z = ZS(L) 

@@ -14,14 +14,20 @@ module Config_mod
       NMET = 2     
 
     character(len=TXTLEN_FILE), public, save :: &
-      GRID = 'NOTSET' ! default grid
+      INPATH  = 'NOTSET' &
+     ,OUTPATH = 'NOTSET' &
+     ,GRIDP   = 'NOTSET' & 
+     ,GRIDZ   = 'NOTSET'
 
     contains
       subroutine Config_Constants()
 
       NAMELIST /Model_config/ &
-        GRID &
-       ,NMET &
+        INPATH  &
+       ,OUTPATH &
+       ,GRIDP   &
+       ,GRIDZ   &
+       ,NMET    &
        ,FOREST_FIRES
 
       open(42,file='config_prism.nml',delim='APOSTROPHE')

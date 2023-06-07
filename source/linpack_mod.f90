@@ -771,4 +771,418 @@ SUBROUTINE F04AEF(A,IA,B,IB,N,M,C,IC,WKSPCE,AA,IAA,BB,IBB,IFAIL)
     50 continue
         return
         end
-    
+!D ---------------------------------------------------------------------------
+      SUBROUTINE SPLIE2(X1A,X2A,YA,M,N,MD,ND,Y2A,IER)
+!D ---------------------------------------------------------------------------
+!D this is a slightly different version to support init_wind_temp.for
+
+!D    SUBROUTINE SPLIE2
+!D
+!D    Purpose:
+!D      constructs one-dimensional natural cubic splines and returns 2nd derivatives
+!D
+!D    Author: W. H. Press, B. P. Flannery, S. A. Teukolsky, and
+!D            W. T. Vetterling
+!D
+!D    Modifier:
+!D      S. L. Osburn
+!D
+!D    Usage:
+!D      CALL SPLIE2(X1A,X2A,YA,M,N,Y2A,IER)
+!D
+!D   Arguments:
+!D
+!D  Input
+!D Parameters   Type    Units   Dimensions               Description
+!D   M          Integer   -     none                     dimensions
+!D   N          Integer   -     none                     
+!D   X1A        Real      -     M                        data points
+!D   X2A        Real      -     N                         (x1,x2,y)
+!D   YA         Real      -     M,N                      
+!D
+!D  Output
+!D Parameters   Type    Units   Dimensions               Description
+!D   Y2A        Real      -     M,N                      second derivatives at each point
+!D   IER        Integer   -     none                   error code
+!D                                                     = 0, no error
+!D
+!D
+!D
+!D  Example:
+!D
+!D  Restrictions:
+!D
+!D  Subroutine and functions required:
+!D    SPLINE
+!D
+!D  INCLUDE code files required:
+!D    none
+!D
+!D  Method:
+!D    See "Numerical Recipies", 1986 edition, section 3.6,
+!D  "Interpolation in Two or More Dimensions", page 95.
+!D
+!D  References:
+!D    Code is a slightly modified version of routine SPLIE2 found
+!D in "Numerical Recipes, The Art of Scientific Computing", 
+!D by William H. Press, Brian P. Flannery, Saul A. Teukolsky, and
+!D William T. Vetterling.  Published by Cambridge University Press, 1986.
+!D Code found on pages 100-101.
+!D    Additional references are:
+!D
+!D  Change History:
+!D   ver        date         by                        description
+!D   1.0 September 3, 1987  SLO                      documented
+!D
+!D---------------------------------------------------------------------------
+!D
+!
+!    NN...max expected value for N or M
+!
+      PARAMETER (NN=500)
+      DIMENSION X1A(M),X2A(N),YA(MD,ND),Y2A(MD,ND),YTMP(NN),Y2TMP(NN)
+      IER = 0
+      DO 13 J=1,M
+        DO 11 K=1,N
+          YTMP(K)=YA(J,K)
+11      CONTINUE
+!
+!    values 1E+30 signal a natural spline
+        CALL SPLINE(X2A,YTMP,N,1.E30,1.E30,Y2TMP,IER)
+        DO 12 K=1,N
+          Y2A(J,K)=Y2TMP(K)
+12      CONTINUE
+13    CONTINUE
+      RETURN
+      END
+
+!D---------------------------------------------------------------------------
+      SUBROUTINE SPLIN2(X1A,X2A,YA,Y2A,M,N,MD,ND,X1,X2,Y,IER)
+!D
+!D---------------------------------------------------------------------------
+!D
+!D    SUBROUTINE SPLIN2
+!D
+!D    Purpose:
+!D      return an interpolated Y value using bicubic interpolation for X1 and X2 
+!D
+!D    Author: W. H. Press, B. P. Flannery, S. A. Teukolsky, and
+!D            W. T. Vetterling
+!D
+!D    Modifier:
+!D      S. L. Osburn
+!D
+!D    Usage:
+!D      CALL SPLIN2(X1A,X2A,YA,Y2A,M,N,X1,X2,Y,IER)
+!D
+!D   Arguments:
+!D
+!D  Input
+!D Parameters   Type    Units   Dimensions               Description
+!D   M          Integer   -     none                     number of coordinates in X1
+!D   N          Integer   -     none                     number of coordinates in X2
+!D   X1         Real      -     none                     coordinate to
+!D   X2         Real      -     none                       interpolate
+!D   X1A        Real      -     M                        data points in form:
+!D   X2A        Real      -     N                         ( X1,X2,Y )
+!D   YA         Real      -     M,N                      
+!D
+!D  Output
+!D Parameters   Type    Units   Dimensions               Description
+!D   Y          Real      -     none                     interpolated result
+!D   Y2A        Real      -     M,N                      second derivatives at each data point 
+!D   IER        Integer   -     none                   error code
+!D                                                     = 0, no error
+!D                                                     ERROR IN SPLINT
+!D                                                     = 10 BAD XA INPUT
+!D
+!D
+!D
+!D  Example:
+!D
+!D  Restrictions:
+!D
+!D  Subroutine and functions required:
+!D    SPLINE
+!D    SPLINT
+!D
+!D  INCLUDE code files required:
+!D    none
+!D
+!D  Method:
+!D    See "Numerical Recipies", 1986 edition, section 3.6,
+!D  "Interpolation in Two or More Dimensions", page 95.
+!D
+!D  References:
+!D    Code is a slightly modified version of routine SPLIN2 found
+!D in "Numerical Recipes, The Art of Scientific Computing", 
+!D by William H. Press, Brian P. Flannery, Saul A. Teukolsky, and 
+!D William T. Vetterling.  Published by Cambridge University Press, 1986.
+!D Code found on page 101.
+!D    Additional references are:
+!D
+!D  Change History:
+!D   ver        date         by                        description
+!D   1.0 September 3, 1987  SLO                      documented
+!D
+!D---------------------------------------------------------------------------
+!D
+!
+!    NN...maximum expected dimension of N or M
+!
+      PARAMETER (NN=500)
+      DIMENSION X1A(M),X2A(N),YA(MD,ND),Y2A(MD,ND),YTMP(NN), &
+           Y2TMP(NN),YYTMP(NN)
+      IER = 0
+!
+!    do M evaluations of row splines constructed with SPLIE2
+!       using 1-dimensional spline evaluator SPLINT
+!
+      DO 12 J=1,M
+        DO 11 K=1,N
+          YTMP(K)=YA(J,K)
+          Y2TMP(K)=Y2A(J,K)
+11      CONTINUE
+        CALL SPLINT(X2A,YTMP,Y2TMP,N,X2,YYTMP(J),IER)
+        IER = 10 * IER
+        IF (IER.EQ.10) RETURN
+12    CONTINUE
+!
+!    construct a one dimensional column spline
+!
+      CALL SPLINE(X1A,YYTMP,M,1.E30,1.E30,Y2TMP,IER)
+!                           
+!    evaluate it
+!
+      CALL SPLINT(X1A,YYTMP,Y2TMP,M,X1,Y,IER)
+      IER = IER * 10
+      RETURN
+      END
+!D---------------------------------------------------------------------------
+      SUBROUTINE SPLINE(X,Y,N,YP1,YPN,Y2,IER)
+!D
+!D---------------------------------------------------------------------------
+!D
+!D    SUBROUTINE SPLINE
+!D
+!D    Purpose:
+!D      given a set of points cooresponding to an interpolated function, and 
+!D    its first derivative at each end of the function, returns the second
+!D    derivative of the interpolated function at each point
+!D
+!D    Author: W. H. Press, B. P. Flannery, S. A. Teukolsky, and
+!D            W. T. Vetterling
+!D
+!D    Modifier:
+!D      S. L. Osburn
+!D
+!D    Usage:
+!D      CALL SPLINE(X,Y,N,YP1,YPN,Y2,IER)
+!D
+!D   Arguments:
+!D
+!D  Input
+!D Parameters   Type    Units   Dimensions               Description
+!D   N          Integer   -     none                     number of data points
+!D   X          Real      -     N                        data points in
+!D   Y          Real      -     N                           ascending order of X
+!D   YP1        Real      -     none                     1st derivatives at X(1)
+!D   YPN        Real      -     none                       and X(N)
+!D
+!D  Output
+!D Parameters   Type    Units   Dimensions               Description
+!D   Y2         Real      -     N                        2nd derivatives at each point
+!D   IER        Integer   -     none                   error code
+!D                                                     = 0, no error
+!D
+!D
+!D
+!D  Example:
+!D
+!D  Restrictions:
+!D
+!D  Subroutine and functions required:
+!D    none
+!D
+!D  INCLUDE code files required:
+!D    none
+!D
+!D  Method:
+!D    See "Numerical Recipies", 1986 edition, section 3.3,
+!D  "Cubic Spline Interpolation", page 86.
+!D
+!D  References:
+!D    Code is a slightly modified version of routine SPLINE found
+!D in "Numerical Recipes, The Art of Scientific Computing", 
+!D by William H. Press, Brian P. Flannery, Saul A. Teukolsky, and 
+!D William T. Vetterling.  Published by Cambridge University Press, 1986.
+!D Code found on page 88.
+!D    Additional references are:
+!D
+!D  Change History:
+!D   ver        date         by                        description
+!D   1.0 September 3, 1987  SLO                      documented
+!D
+!D---------------------------------------------------------------------------
+!D
+!
+!    NMAX...maximum expected N
+!
+      PARAMETER (NMAX=500)
+      DIMENSION X(N),Y(N),Y2(N),U(NMAX)
+      IER = 0
+!
+!    lower boundary condition set to be natural or...
+!
+      IF (YP1.GT..99E30) THEN
+        Y2(1)=0.
+        U(1)=0.
+      ELSE
+!
+!    ...have a specified 1st derivative
+!
+        Y2(1)=-0.5
+        U(1)=(3./(X(2)-X(1)))*((Y(2)-Y(1))/(X(2)-X(1))-YP1)
+      ENDIF
+!
+!    decomposition loop of tridiagonal algorithm (Y2 and U are used as temp. storage)
+!
+      DO 11 I=2,N-1
+        SIG=(X(I)-X(I-1))/(X(I+1)-X(I-1))
+        P=SIG*Y2(I-1)+2.
+        Y2(I)=(SIG-1.)/P
+        U(I)=(6.*((Y(I+1)-Y(I))/(X(I+1)-X(I))-(Y(I)-Y(I-1)) &
+            /(X(I)-X(I-1)))/(X(I+1)-X(I-1))-SIG*U(I-1))/P
+11    CONTINUE
+!
+!    upper boundary condition set to be natural or...
+!
+      IF (YPN.GT..99E30) THEN
+        QN=0.
+        UN=0.
+      ELSE
+!
+!    ...have a specified first derivative
+!
+        QN=0.5
+        UN=(3./(X(N)-X(N-1)))*(YPN-(Y(N)-Y(N-1))/(X(N)-X(N-1)))
+      ENDIF
+      Y2(N)=(UN-QN*U(N-1))/(QN*Y2(N-1)+1.)
+!
+!    backsubstitution loop of tridiagonal algorithm
+!
+      DO 12 K=N-1,1,-1
+        Y2(K)=Y2(K)*Y2(K+1)+U(K)
+12    CONTINUE
+      RETURN
+      END
+!D---------------------------------------------------------------------------
+      SUBROUTINE SPLINT(XA,YA,Y2A,N,X,Y,IER)
+!D
+!D---------------------------------------------------------------------------
+!D
+!D    SUBROUTINE SPLINT
+!D
+!D    Purpose:
+!D      preform a cubic-spline interpolation
+!D
+!D    Author: W. H. Press, B. P. Flannery, S. A. Teukolsky, and
+!D            W. T. Vetterling
+!D
+!D    Modifier:
+!D      S. L. Osburn
+!D
+!D    Usage:
+!D      CALL SPLINT(XA,YA,Y2A,N,X,Y,IER)
+!D
+!D   Arguments:
+!D
+!D  Input
+!D Parameters   Type    Units   Dimensions               Description
+!D   N          Integer   -     none                     number of points
+!D   X          Real      -     none                     point to interpolate
+!D   XA         Real      -     N                        data points
+!D   YA         Real      -     N                        
+!D   Y2A        Real      -     N                        array output from SPLINE
+!D
+!D  Output
+!D Parameters   Type    Units   Dimensions               Description
+!D   Y          Real      -     none                     interpolation
+!D   IER        Integer   -     none                     error code
+!D                                                       = 0, no error
+!D                                                       = 1, bad XA input
+!D
+!D
+!D
+!D  Example:
+!D
+!D  Restrictions:
+!D    The code has been slightly modified to return an error code
+!D  instead of exicuting a PAUSE if an unusual circumstance is
+!D  encountered.  Error arguments must be included in subroutine call.
+!D
+!D  Subroutine and functions required:
+!D    none
+!D
+!D  INCLUDE code files required:
+!D    none
+!D
+!D  Method:
+!D    See "Numerical Recipies", 1986 edition, section 3.3,
+!D  "Cubic Spline Interpolation", page 86.
+!D
+!D  References:
+!D    Code is a slightly modified version of routine SPLINT found
+!D in "Numerical Recipes, The Art of Scientific Computing", 
+!D by William H. Press, Brian P. Flannery, Saul A. Teukolsky, and 
+!D William T. Vetterling.  Published by Cambridge University Press, 1986.
+!D Code found on page 89.
+!D    Additional references are:
+!D
+!D  Change History:
+!D   ver        date         by                        description
+!D   1.0 August 28, 1987    SLO                      documented and added error
+!D                                                   return
+!D
+!D---------------------------------------------------------------------------
+!D
+      DIMENSION XA(N),YA(N),Y2A(N)
+      IER = 0
+!
+!    find place by bisection (good random calls of points)
+!
+      KLO=1
+      KHI=N
+1     IF (KHI-KLO.GT.1) THEN
+        K=(KHI+KLO)/2
+        IF(XA(K).GT.X)THEN
+          KHI=K
+        ELSE
+          KLO=K
+        ENDIF
+      GOTO 1
+      ENDIF
+!
+!    KLO and KHI bracket the point
+!
+      H=XA(KHI)-XA(KLO)
+!
+!    bad XA
+!
+      IF (H.EQ.0.) THEN
+         IER = 1
+         RETURN
+      ENDIF
+!
+!    cubic spline polynomial
+!
+      A=(XA(KHI)-X)/H
+      B=(X-XA(KLO))/H
+!
+!    and the value is
+!
+      Y=A*YA(KLO)+B*YA(KHI)+ &
+            ((A**3-A)*Y2A(KLO)+(B**3-B)*Y2A(KHI))*(H**2)/6.
+      RETURN
+      END
+

@@ -1,7 +1,7 @@
 Config_mod.o : Config_mod.f90 
 coolmd_mod.o : coolmd_mod.f90 
 Declarations_mod.o : Declarations_mod.f90 
-IO_mod.o : IO_mod.f90 Config_mod.o Declarations_mod.o 
+IO_mod.o : IO_mod.f90 Prognos_sigma_mod.o Config_mod.o Declarations_mod.o 
 linpack_mod.o : linpack_mod.f90 
 prism_Driver.o : prism_Driver.f90 IO_mod.o Config_mod.o Prognos_sigma_mod.o Declarations_mod.o Timing_mod.o 
 Prognos_sigma_mod.o : Prognos_sigma_mod.f90 splib2_mod.o coolmd_mod.o Declarations_mod.o 

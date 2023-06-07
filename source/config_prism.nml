@@ -1,5 +1,8 @@
 &Model_config
-  GRID             = 'ERAn_Pgrid.dat',
+  INPATH           = '/home/wim/Desktop/PRISM_f90/input/',
+  OUTPATH          = '/home/wim/Desktop/PRISM_f90/output/',
+  GRIDP            = 'ERAn_Pgrid.dat',
+  GRIDZ            = 'ERAn_Zgrid.dat',
   NMET             = 8,
   FOREST_FIRES     = T,
 &end
