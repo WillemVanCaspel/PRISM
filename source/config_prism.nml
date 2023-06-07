@@ -1,0 +1,5 @@
+&Model_config
+  GRID             = 'ERAn_Pgrid.dat',
+  NMET             = 8,
+  FOREST_FIRES     = T,
+&end

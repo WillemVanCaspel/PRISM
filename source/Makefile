@@ -25,8 +25,8 @@ LLIB = $(shell nc-config --flibs)
 F90 = gfortran
 
 # GNU gfortran compiler (version 4.4.3 or later)
-F90FLAGS = -ffree-line-length-none -fdefault-real-8 -fdefault-double-8 -O2
-
+F90FLAGS = -ffree-line-length-none -fdefault-real-8 -fdefault-double-8 -O2 -fdec
+#-fdefault-real-8 -fdefault-double-8
 ###################################################
 
 

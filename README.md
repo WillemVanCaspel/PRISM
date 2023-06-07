@@ -15,8 +15,8 @@ git clone git@github.com:WillemVanCaspel/PRISM.git
 Once the configuration file (source/input.ini) has been set up, the model can be compiled and run using the following commands:
 
 - make clean
-- compile
-- sbash modrun.sh
+- make
+- ./prism
 
 A more comprehensive tutorial on how to run and configure the model using simplified (dummy) input files is given in the README.md file in the tutorial directory.  
 
