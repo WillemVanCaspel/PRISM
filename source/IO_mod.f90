@@ -3,13 +3,14 @@ module IO_mod
     use Declarations_mod
     use Config_mod          , only: INPATH, OUTPATH, GRIDP, GRIDZ 
     use Prognos_sigma_mod
+    use heating_Mod
 
     implicit none
 
     integer, private, parameter :: IO_IND = 18
 
     ! routines used by other modules
-    public :: inialt_read, init_1d_damp, inittem
+    public :: inialt_read, init_1d_damp, inittem, CMAM_KZZ, SPEWPY
      
     contains 
 
@@ -382,115 +383,419 @@ module IO_mod
               RETURN
     END FUNCTION HCOOL
         
-        ! !=============================================
-        !       REAL FUNCTION CMAM_KZZ(Z, T)
-        ! !=============================================
-        ! !   Eddy + molecular Kzz profile (M**2 s**-1)
-        ! !   Eddy Formula models profile in McLandress 2002
-        ! !   Molec from Banks, as used in WACCM
+        !=============================================
+              REAL FUNCTION CMAM_KZZ(Z, T)
+        !=============================================
+        !   Eddy + molecular Kzz profile (M**2 s**-1)
+        !   Eddy Formula models profile in McLandress 2002
+        !   Molec from Banks, as used in WACCM
         
-        !       IMPLICIT NONE
+              IMPLICIT NONE
               
-        !       REAL Z, T, EDDY, SLOPE
+              REAL Z, T, EDDY, SLOPE
         
-        !       IF (Z .LT. 15) THEN
-        !         EDDY=1.
-        !       ELSE IF ((Z .GE. 15.) .AND. (Z .LT. 107.5)) THEN
-        !         SLOPE=(ALOG(200.)-ALOG(1.))/92.5
-        !         EDDY=EXP((Z-15.)*SLOPE)
-        !       ELSE IF ((Z .GE. 107.5) .AND. (Z .LT. 115.)) THEN
-        !         EDDY=200.
-        !       ELSE IF (Z .GE. 115) THEN
-        !         SLOPE=(ALOG(8.)-ALOG(200.))/15.
-        !         EDDY=200.*EXP((Z-115)*SLOPE)
-        !       ENDIF
+              IF (Z .LT. 15) THEN
+                EDDY=1.
+              ELSE IF ((Z .GE. 15.) .AND. (Z .LT. 107.5)) THEN
+                SLOPE=(ALOG(200.)-ALOG(1.))/92.5
+                EDDY=EXP((Z-15.)*SLOPE)
+              ELSE IF ((Z .GE. 107.5) .AND. (Z .LT. 115.)) THEN
+                EDDY=200.
+              ELSE IF (Z .GE. 115) THEN
+                SLOPE=(ALOG(8.)-ALOG(200.))/15.
+                EDDY=200.*EXP((Z-115)*SLOPE)
+              ENDIF
         
-        !       CMAM_KZZ=EDDY
+              CMAM_KZZ=EDDY
         
-        !       RETURN
-        !       END
+              RETURN
+              END
+                
+        !=========================================================
+              SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE)
+        !=========================================================
+        !   Write zonal (ZW) and meridional wind (MW), 
+        !   surf geopotential (GEOB), temperature (TPR), surf pres (PRS)
         
-        ! !=========================================================
-        ! !   SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE)
-        ! !=========================================================
-        ! !   Write zonal and meridional wind, & vertical velocities,
-        ! !   geopotential, potential temperature, for Python I/O.
-        ! !
-        ! !   IMPLICIT NONE
-        ! !
-        ! !   INCLUDE 'mcons.inc'
-        ! !   INCLUDE 'spcons.inc'
-        ! !   INCLUDE 'mgrid.inc'
-        ! !   INCLUDE 'spgrid.inc'
-        ! !
-        ! !   COMPLEX PGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        ! !   COMPLEX PSSP(0:M1MAX,0:N1MAX)
-        ! !   INTEGER M, N, L, IREC
-        ! !
-        ! !   REAL GEO(K2MAX)
-        ! !   REAL GEOB(K1MAX, K2MAX)
-        ! !   COMMON /GEOBOT/ GEO, GEOB
-        ! !   
-        ! !   CHARACTER*50 OUTFILE
-        ! !
-        ! !   IREC=IREC+1
-        ! !	  WRITE(6,*) 'Writing Python record: ', IREC, ' to  ', OUTFILE
-        ! !
-        ! !   WRITE(13) (((PGQSP(M,N,JVOR,L),M=0,M1),N=0,N1),L=1,L1)
-        ! !   WRITE(13) (((PGQSP(M,N,JDIV,L),M=0,M1),N=0,N1),L=1,L1)
-        ! !   WRITE(13) (((PGQSP(M,N,JPOT,L),M=0,M1),N=0,N1),L=1,L1)
-        ! !   WRITE(13) ((PSSP(M,N),M=0,M1),N=0,N1)
-        ! !   WRITE(13) ((GEOB(M,N),M=1,K1),N=1,K2)
+              IMPLICIT NONE
         
-        ! !   END
+            !   INCLUDE 'mcons.inc'
+            !   INCLUDE 'spcons.inc'
+            !   INCLUDE 'mgrid.inc'
+            !   INCLUDE 'spgrid.inc'
         
-        ! !=========================================================
-        !       SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE)
-        ! !=========================================================
-        ! !   Write zonal (ZW) and meridional wind (MW), 
-        ! !   surf geopotential (GEOB), temperature (TPR), surf pres (PRS)
-        
-        !       IMPLICIT NONE
-        
-        !       INCLUDE 'mcons.inc'
-        !       INCLUDE 'spcons.inc'
-        !       INCLUDE 'mgrid.inc'
-        !       INCLUDE 'spgrid.inc'
-        
-        !       COMPLEX PGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX PSSP(0:M1MAX,0:N1MAX)
-        !       COMPLEX FSP0(0:M1MAX,0:N1MAX),FSP1(0:M1MAX,0:N1MAX)
-        !       INTEGER M, N, L, IREC
+              COMPLEX PGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+              COMPLEX PSSP(0:M1MAX,0:N1MAX)
+              COMPLEX FSP0(0:M1MAX,0:N1MAX),FSP1(0:M1MAX,0:N1MAX)
+              INTEGER M, N, L, IREC
               
-        !       REAL ZW(K1MAX,K2MAX,L1MAX), MW(K1MAX,K2MAX,L1MAX)
-        !       REAL TPR(K1MAX,K2MAX,L1MAX)
-        !       REAL PRS(K1MAX,K2MAX)
+              REAL ZW(K1MAX,K2MAX,L1MAX), MW(K1MAX,K2MAX,L1MAX)
+              REAL TPR(K1MAX,K2MAX,L1MAX)
+              REAL PRS(K1MAX,K2MAX)
         
-        !       REAL GEO(K2MAX)
-        !       REAL GEOB(K1MAX, K2MAX)
-        !       COMMON /GEOBOT/ GEO, GEOB
+              REAL GEO(K2MAX)
+              REAL GEOB(K1MAX, K2MAX)
+              COMMON /GEOBOT/ GEO, GEOB
               
-        !       CHARACTER*50 OUTFILE
+              CHARACTER*50 OUTFILE
         
-        !       IREC=IREC+1
-        ! 	  WRITE(6,*) 'Writing Python record: ', IREC, ' to  ', OUTFILE
+              IREC=IREC+1
+        	  WRITE(6,*) 'Writing Python record: ', IREC, ' to  ', OUTFILE
                        
-        !       DO L=1,L1
-        ! !...... compute streamfunction PSI and velocity potential CHI
-        !         CALL IDELSQ( FSP0, PGQSP(0,0,JVOR,L), N1)
-        !         CALL IDELSQ( FSP1, PGQSP(0,0,JDIV,L), N1)
-        ! !.......transform to physical space
-        !         CALL HVELOC( ZW(1,1,L), MW(1,1,L), FSP0, FSP1)
-        !         CALL PHYSIC( TPR(1,1,L), PGQSP(0,0,JPOT,L))
-        !       ENDDO
+              DO L=1,L1
+        !...... compute streamfunction PSI and velocity potential CHI
+                CALL IDELSQ( FSP0, PGQSP(0,0,JVOR,L), N1)
+                CALL IDELSQ( FSP1, PGQSP(0,0,JDIV,L), N1)
+        !.......transform to physical space
+                CALL HVELOC( ZW(1,1,L), MW(1,1,L), FSP0, FSP1)
+                CALL PHYSIC( TPR(1,1,L), PGQSP(0,0,JPOT,L))
+              ENDDO
             
-        !       CALL PHYSIC(PRS,PSSP)
+              CALL PHYSIC(PRS,PSSP)
               
-        !       WRITE(13) (((ZW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-        !       WRITE(13) (((MW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-        !       WRITE(13) (((TPR(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-        !       WRITE(13) ((PRS(M,N),M=1,K1),N=1,K2)
-        !       WRITE(13) ((GEOB(M,N),M=1,K1),N=1,K2)
+              WRITE(13) (((ZW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) (((MW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) (((TPR(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) ((PRS(M,N),M=1,K1),N=1,K2)
+              WRITE(13) ((GEOB(M,N),M=1,K1),N=1,K2)
               
-        !       END
+              END
+
+!===============================================
+	SUBROUTINE INITVAR(PGQSP0, PSSP0)
+!===============================================
+
+      	IMPLICIT NONE
+
+      	! INCLUDE 'mcons.inc'
+      	! INCLUDE 'spcons.inc'
+      	! INCLUDE  'mgrid.inc'
+      	! INCLUDE  'spgrid.inc'
+
+      REAL TEMPPH(K1MAX, K2MAX)
+      	REAL ZONW(K1MAX,K2MAX), MERW(K1MAX,K2MAX)
+      	COMPLEX PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+      	COMPLEX PSSP0(0:M1MAX,0:N1MAX)
+      	INTEGER L, K, J, IPGQ, M
+
+      REAL TEMP0(K2MAX,L1MAX), U0(K2MAX,L1MAX)
+      COMPLEX VOR0(0:M1MAX,0:N1MAX,L1MAX)
+      COMPLEX TMNLV(0:M1MAX,0:N1MAX,L1MAX)
+      COMMON /ZONE/ TEMP0, U0, VOR0, TMNLV
+
+	REAL GEO(K2MAX)
+	REAL GEOP(K1MAX, K2MAX)
+	COMMON /GEOBOT/ GEO, GEOP
+        REAL QB(K1MAX,K2MAX)
+
+      	EXTERNAL YSP2LA
+
+        integer jran
+        real ran,rat(0:n1max),dwl
+	REAL TEMPp(K2MAX,L1MAX), Up(K2MAX,L1MAX), vp(k2max,l1max)
+
+!...Spectral components of temperature field
+      	DO L=1,L1
+       	  DO IPGQ=1,3+NTRACE
+	    CALL ZEROSP( PGQSP0(0,0,IPGQ,L), N1)
+       	  END DO
+
+	  DO K=1,K2
+	    DO J=1,K1
+	      TEMPPH(J,K) = TEMP0(K,L)
+	    ENDDO
+	  ENDDO
+
+          CALL SPECTR( PGQSP0(0,0,JPOT,L), TEMPPH )
+      	END DO
+
+!...Set q=log(p_surf)
+        CALL ZEROSP (PSSP0,N1)
+
+        DO J=1,K1
+          QB(J,1) = ALOG(PSURF)
+        ENDDO
+
+        DO K=2,K2
+          QB(1,K) = QB(1,K-1) + & 
+	       F0 * A0 * MU(K) * U0(K,l1) / RGAS / TEMP0(K,l1) &
+	       * (PHI(K)-PHI(K-1))
+
+          DO J=2,K1
+            QB(J,K) = QB(1,K)
+          ENDDO
+        ENDDO
+
+        PSSP0(0,0)=ALOG(PSURF)
+
+
+!.....Spectral components of wind field
+      DO L=1,L1
+        DO K=1,K2
+          DO J=1,K1
+	        ZONW(J,K) = U0(K,L)
+	        MERW(J,K) = 0.
+	      ENDDO
+         ENDDO
+
+!........Compute divergence & vorticity
+         CALL CURLZ( PGQSP0(0,0,JVOR,L), ZONW, MERW)
+         CALL DIVERG(PGQSP0(0,0,JDIV,L), ZONW, MERW) ! PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+      END DO
+
+       	RETURN
+      	END
+
+!     ===================================================
+      SUBROUTINE TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, &
+                                TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, &
+                                STRATINDEX, RAYFAC, EDDIF, ZS)
+!     ===================================================
+      IMPLICIT NONE
+
+    !   INCLUDE 'mcons.inc'
+    !   INCLUDE 'spcons.inc'
+    !   INCLUDE  'mgrid.inc'
+    !   INCLUDE  'spgrid.inc'
+
+      COMPLEX  PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+      COMPLEX  PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+      COMPLEX  DPGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+      COMPLEX  PSSP0(0:M1MAX,0:N1MAX)
+      COMPLEX  PSSP1(0:M1MAX,0:N1MAX)
+      COMPLEX DPSSP(0:M1MAX,0:N1MAX)
+      COMPLEX FSP1(0:M1MAX,0:N1MAX)
+      REAL TIM, DT1, ROBFAC
+      INTEGER TRMM, TIDE, ERATIDE
+
+      REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
+      INTEGER TROPINDEX, STRATINDEX
+      INTEGER L, M, N, IPGQ
+      
+      REAL EDDIF 
+      REAL*4 ZS(L1MAX)
+      
+      REAL WCLAMP1, WCLAMP2, WCLAMP3
+      INTEGER TROPLVL, STRATLVL
+      COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
+      
+!     Compute leap-frog "adiabatic" time tendency
+      CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
+
+!     Include effects of forcing/damping
+      CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
+
+!     Include bottom boundary, mechanical & thermal, GW forcing
+      CALL FORCING(DPGQSP, PGQSP1, TIM)
+
+      ! NB: These can be re-added again later
+! !     Radiative heating (no effect if mdlrd=1) ! hard coded in ZHU_HEAT
+!       CALL zhu_HEAT(DPGQSP, PGQSP1, TIM)
+
+! !     trmm latent heating
+!       IF (TRMM .EQ. 1) CALL TRMM_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, TROPINDEX)
+
+! !     tide heat sources
+!       IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
+      
+!     ERA (ECMWF) tide forcing. SH input file on model levels required.
+      IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+!      IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+
+!     Make implicit corrections to tendency
+      CALL DDTIMP( DPGQSP,DPSSP )
+
+!     Leap-frog to next time-step
+      DO 220 L=1,L1
+        DO 220 IPGQ=JVOR,JPOT
+          DO 210 N=0,N1
+            DO 210 M=0,MIN0(N,M1),1
+              FSP1(M,N)= PGQSP0(M,N,IPGQ,L) &
+              + 2.0 * DT1 * DPGQSP(M,N,IPGQ,L)
+  210     CONTINUE
+
+!         Apply Robert filter
+	      IF (ROBFAC .NE. 0.) THEN
+             IF (L .LT. 21) THEN ! 21 in ERAhh, 11 in ERAz
+                CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             FSP1, 0.01 * 50)
+                CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+     
+!             ELSE IF (L .LT. 31) THEN
+!                CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
+!     1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
+!     1                       FSP1, 0.01 * 25)
+!                CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
+!     1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+            ELSE
+                CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             FSP1,  ROBFAC)
+                CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+                             PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+            ENDIF
+          ENDIF
+
+	      CALL SPCOPY( PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), FSP1, N1)
+  220 CONTINUE
+
+!     Surface pressure tendency
+      DO 230 N=0,N1
+        DO 230 M=0,MIN0(N,M1),1
+          FSP1(M,N)= PSSP0(M,N) &
+            + 2.0 * DT1 * DPSSP(M,N)
+     
+  230 CONTINUE
+
+!     Apply Robert filter
+      IF (ROBFAC .NE. 0.) THEN
+        CALL ROBFIL( PSSP0, PSSP1, FSP1, ROBFAC)
+        CALL SPCOPY( PSSP0, PSSP1, N1)
+      ENDIF
+
+      CALL SPCOPY( PSSP1, FSP1, N1)
+
+      RETURN
+    END subroutine TIME_STEP_INIT
+
+! !   ===================================================
+!     SUBROUTINE TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE,        &
+!                           ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, &
+!                           RAYFAC, EDDIF, ZS)
+! !   ===================================================
+!              IMPLICIT NONE
+       
+!             !  INCLUDE 'mcons.inc'
+!             !  INCLUDE 'spcons.inc'
+!             !  INCLUDE 'mgrid.inc'
+!             !  INCLUDE 'spgrid.inc'
+!             !  INCLUDE 'tmarch.inc'
+       
+!              COMPLEX  PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+!              COMPLEX  PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+!              COMPLEX  DPGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
+!              COMPLEX  PSSP0(0:M1MAX,0:N1MAX)
+!              COMPLEX  PSSP1(0:M1MAX,0:N1MAX)
+!              COMPLEX DPSSP(0:M1MAX,0:N1MAX)
+!              COMPLEX FSP1(0:M1MAX,0:N1MAX)
+!              REAL TIM, DT1, ROBFAC
+!              INTEGER TRMM, TIDE, ERATIDE
+             
+!              REAL EDDIF, ZS(L1MAX)
+       
+!              REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
+!              INTEGER TROPINDEX, STRATINDEX
+!              INTEGER L, M, N, IPGQ
+             
+!              REAL TEMP0(K2MAX,L1MAX), U0(K2MAX,L1MAX)
+!              COMPLEX VOR0(0:M1MAX,0:N1MAX,L1MAX)
+!              COMMON /ZONE/ TEMP0, U0, VOR0
+             
+!              COMPLEX SURF1(0:100,0:100)
+!              COMMON /SURFACE/ SURF1
+             
+!              REAL WCLAMP1, WCLAMP2, WCLAMP3
+!              INTEGER TROPLVL, STRATLVL
+!              COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
+             
+!        !   Compute leap-frog "adiabatic" time tendency
+!              CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
+       
+!        !   Include effects of forcing/damping
+!              CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
+       
+!        !   Include bottom boundary, mechanical & thermal, GW forcing
+!              CALL FORCING(DPGQSP, PGQSP1, TIM)
+       
+!        !   Radiative heating (no effect if mdlrd=1) ! hard coded in ZHU_HEAT
+!              CALL zhu_HEAT(DPGQSP, PGQSP1, TIM)
+       
+!        !   trmm latent heating
+!              IF (TRMM .EQ. 1) CALL TRMM_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, TROPINDEX)
+       
+!        !   tide heat sources
+!              IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
+             
+!        !   ERA (ECMWF) tide forcing
+!              IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+!        !    IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+       
+!        !   Make implicit corrections to tendency
+!              CALL DDTIMP( DPGQSP,DPSSP )
+       
+!        !   Leap-frog to next time-step
+!              DO 220 L=1,L1
+!                DO 220 IPGQ=JVOR,JPOT
+!                  DO 210 N=0,N1
+!                    DO 210 M=0,MIN0(N,M1),1
+!                      FSP1(M,N)= PGQSP0(M,N,IPGQ,L) &
+!                      + 2.0 * DT1 * DPGQSP(M,N,IPGQ,L)
+!          210     CONTINUE
+       
+!        !       Apply Robert filter
+!                  IF (ROBFAC .NE. 0.) THEN
+!                    IF (L .LT. 21) THEN ! 16 ERAh
+!                        CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+!                                     PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), &
+!                                     FSP1, 0.01 * 50)
+!                        CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+!                                     PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+            
+!        !           ELSE IF (L .LT. 10) THEN ! 31 ERAh
+!        !              CALL MODROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
+!        !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
+!        !   1                       FSP1, ROBFAC * 2)
+!        !              CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
+!        !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+                    
+!                     ELSE
+!        !               CALL MODROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
+!        !   1                           PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
+!        !   1                           FSP1, ROBFAC)
+!                         CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L),  & 
+!                                         PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), &
+!                                         FSP1, ROBFAC)
+!                         CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), &
+!                                      PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
+!                     ENDIF
+!                  ENDIF
+                 
+!        !   uncomment if you want to hard-force 
+!        !        IF (L .GT. -1) THEN
+!        !          DO M=0,0
+!        !            DO N=0,N1       
+!        !                IF (IPGQ .EQ. JPOT) THEN
+!        !                  FSP1(M,N)= TMNLV(M,N,L)
+!        !                ELSE
+!        !                  FSP1(M,N)= VOR0(M,N,L)
+!        !                ENDIF
+!        !                PGQSP0(M,N,JDIV,L)= COMPLEX(0,0)
+!        !                PGQSP1(M,N,JDIV,L)= COMPLEX(0,0)
+!        !            ENDDO
+!        !          ENDDO
+!        !        ENDIF
+       
+!                  CALL SPCOPY( PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), FSP1, N1)
+!          220 CONTINUE
+       
+!        !   Surface pressure tendency
+!              DO 230 N=0,N1
+!                DO 230 M=0,MIN0(N,M1),1
+!                  FSP1(M,N)= PSSP0(M,N) &
+!                   + 2.0 * DT1 * DPSSP(M,N)
+            
+!          230 CONTINUE
+       
+!        !   Apply Robert filter
+!              IF (ROBFAC .NE. 0.) THEN
+!                CALL MODROBFIL( PSSP0, PSSP1, FSP1, ROBFAC)
+!                CALL SPCOPY( PSSP0, PSSP1, N1)
+!              ENDIF
+       
+!              CALL SPCOPY( PSSP1, FSP1, N1)
+       
+!              RETURN
+!              END
 end module IO_mod

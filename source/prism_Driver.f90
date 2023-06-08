@@ -7,7 +7,8 @@
               use Declarations_mod
               use Prognos_sigma_mod
               use Config_mod,           only: Config_Constants
-              use IO_mod,               only: inialt_read, init_1d_damp, inittem
+              use IO_mod    
+              use heating_Mod          
         
               IMPLICIT NONE
         
@@ -45,8 +46,8 @@
               INTEGER NSTEP, NSKIP, ZLUN
               INTEGER TRMM, TIDE, ERATIDE
         
-              REAL CMAM_KZZ
-              EXTERNAL  CMAM_KZZ
+              ! REAL CMAM_KZZ ! now a function in IO_mod
+              ! EXTERNAL  CMAM_KZZ
         
               REAL Z
               INTEGER BRECL, ZLVLS
@@ -285,100 +286,100 @@
               WRITE(6,*) '      z','  vervis ',' diffc ','    udamp ',' tdamp ', &
                  '  wdamp ','   mdamp',  '  alphaw ',  ' alphat '
                   
-        !       DO L=1,NLEV
-        !         Z = ZS(L) 
+              DO L=1,NLEV
+                Z = ZS(L) 
               
-        !         RHO=1.34*EXP(-Z/7.)
-        !         MOL=3.5E-7*(TZMEAN(L)**.666)/RHO
-        !         MOL= MIN(MOL,500.) ! molecular diffusion; crashes if too large
+                RHO=1.34*EXP(-Z/7.)
+                MOL=3.5E-7*(TZMEAN(L)**.666)/RHO
+                MOL= MIN(MOL,500.) ! molecular diffusion; crashes if too large
         
-        !         VERVIS(L)= MIN(CMAM_KZZ(Z,TZMEAN(L))*Ueddy, 200.) + MOL !*Ueddy
-        !         DIFFC(L)= MIN(CMAM_KZZ(Z,TZMEAN(L))*Teddy, 200.) + MOL !*Teddy
+                VERVIS(L)= MIN(CMAM_KZZ(Z,TZMEAN(L))*Ueddy, 200.) + MOL !*Ueddy
+                DIFFC(L)= MIN(CMAM_KZZ(Z,TZMEAN(L))*Teddy, 200.) + MOL !*Teddy
                 
-        !         IF (Z .GT. 0) THEN
-        !           VERVIS(L)=VERVIS(L) 
-        !           DIFFC(L)=DIFFC(L) 
-        !         ELSE
-        !           VERVIS(L)=0
-        !           DIFFC(L)=0
-        !         ENDIF
+                IF (Z .GT. 0) THEN
+                  VERVIS(L)=VERVIS(L) 
+                  DIFFC(L)=DIFFC(L) 
+                ELSE
+                  VERVIS(L)=0
+                  DIFFC(L)=0
+                ENDIF
                 
-        !         Z1= 13.1 * 7.0
-        !         Z2= 14.3 * 7.0
-        !         ETA0= 250 * 0
-        !         A1= 1.1 * 7.0   !4.0 * 7.0
-        !         A2= 1.113 * 7.0 !2.0 * 7.0
+                Z1= 13.1 * 7.0
+                Z2= 14.3 * 7.0
+                ETA0= 250 * 0
+                A1= 1.1 * 7.0   !4.0 * 7.0
+                A2= 1.113 * 7.0 !2.0 * 7.0
                 
-        !         IF (Z .LE. Z1) THEN
-        !           ANDREWS = ETA0*EXP(-((Z - Z1)/A1)**2)
-        !         ELSE
-        !           IF (Z .LE. Z2) THEN
-        !             ANDREWS = ETA0
-        !           ELSE
-        !             ANDREWS = ETA0*EXP(-((Z - Z2)/A2)**2) 
-        !           ENDIF
-        !         ENDIF
+                IF (Z .LE. Z1) THEN
+                  ANDREWS = ETA0*EXP(-((Z - Z1)/A1)**2)
+                ELSE
+                  IF (Z .LE. Z2) THEN
+                    ANDREWS = ETA0
+                  ELSE
+                    ANDREWS = ETA0*EXP(-((Z - Z2)/A2)**2) 
+                  ENDIF
+                ENDIF
                 
-        !         VERVIS(L)= VERVIS(L) + ANDREWS
-        !         DIFFC(L)=DIFFC(L) + ANDREWS
+                VERVIS(L)= VERVIS(L) + ANDREWS
+                DIFFC(L)=DIFFC(L) + ANDREWS
                 
-        !         WRITE(6,'(9f8.2)') z, vervis(L), diffc(L),
-        !      1      udamp(l)/dayinv, tdamp(l)/dayinv, wdamp(l)/dayinv,
-        !      1      mdamp(l)/dayinv, alphaw(L)/dayinv, alphat(L)/dayinv
-        !       ENDDO
+                WRITE(6,'(9f8.2)') z, vervis(L), diffc(L), &
+                    udamp(l)/dayinv, tdamp(l)/dayinv, wdamp(l)/dayinv, &
+                    mdamp(l)/dayinv, alphaw(L)/dayinv, alphat(L)/dayinv
+              ENDDO
               
-        !       TSTEEP= 1.2 ! (never used anything else)
-        !       CALL TINI(TZMEAN, TSTEEP, TRADEQ, VERVIS, DIFFC)
+              TSTEEP= 1.2 ! (never used anything else)
+               CALL TINI(TZMEAN, TSTEEP, TRADEQ, VERVIS, DIFFC)
         
-        ! !   Write meta-data to Python output file
-        !       OPEN(13, FILE=TRIM(OUTFOLD)//TRIM(OUTFILE),FORM='UNFORMATTED')
-        !       WRITE(13) K1, K2, M1, N1, L1, PBOT, PLID, DT1*NSKIP, NSTEP/NSKIP+1
-        !       WRITE(13) (PLV(I),I=1,L1)
-        !       WRITE(13) (DEGLAT(I), I=1,K2)
-        !       WRITE(13) (ZSTDLV(I)/1000.+ZBOT,I=1,NLEV)
+        !   Write meta-data to Python output file
+              OPEN(13, FILE=TRIM(OUTFOLD)//TRIM(OUTFILE),FORM='UNFORMATTED')
+              WRITE(13) K1, K2, M1, N1, L1, PBOT, PLID, DT1*NSKIP, NSTEP/NSKIP+1
+              WRITE(13) (PLV(I),I=1,L1)
+              WRITE(13) (DEGLAT(I), I=1,K2)
+              WRITE(13) (ZSTDLV(I)/1000.+ZBOT,I=1,NLEV)
         
-        !       WRITE(6,*) 'ENTER IMPLCT, ROBFAC' ! IMPLCT = .5 required for fast waves
-        !       READ(5,*) IMPLCT, ROBFAC
-        !       WRITE(6,*) IMPLCT, ROBFAC
+              WRITE(6,*) 'ENTER IMPLCT, ROBFAC' ! IMPLCT = .5 required for fast waves
+              READ(5,*) IMPLCT, ROBFAC
+              WRITE(6,*) IMPLCT, ROBFAC
               
-        !       IF (CFF .EQ. 1) THEN
-        ! !     Read in initial state if continue from file
-        !         DO 110 L=1,NLEV
-        !           DO 110 IPGQ=JVOR,JPOT
-        ! 	        READ(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
-        !             READ(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
-        !   110   CONTINUE
+              IF (CFF .EQ. 1) THEN
+        !     Read in initial state if continue from file
+                DO 110 L=1,NLEV
+                  DO 110 IPGQ=JVOR,JPOT
+        	        READ(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
+                    READ(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
+          110   CONTINUE
         
-        !         READ(11)((PSSP0(M,N),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
-        !         READ(11)((PSSP1(M,N),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
+                READ(11)((PSSP0(M,N),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
+                READ(11)((PSSP1(M,N),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
         
-        !         CLOSE(11)
+                CLOSE(11)
         
-        ! !     Save the initial state
-        !         CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
+        !     Save the initial state
+                CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
         
-        !       ELSE
-        ! !     Initialize temperature distribution, wind field and surface condtions
-        !         CALL INITVAR(PGQSP0,PSSP0)
+              ELSE
+        !     Initialize temperature distribution, wind field and surface condtions
+                CALL INITVAR(PGQSP0,PSSP0)
         
-        !         DO L=1,NLEV
-        ! 	      DO IPGQ=JVOR,JPOT
-        !             CALL SPCOPY( PGQSP1(0,0,IPGQ,L), PGQSP0(0,0,IPGQ,L), N1)
-        ! 	      ENDDO
-        !         ENDDO
+                DO L=1,NLEV
+        	      DO IPGQ=JVOR,JPOT
+                    CALL SPCOPY( PGQSP1(0,0,IPGQ,L), PGQSP0(0,0,IPGQ,L), N1)
+        	      ENDDO
+                ENDDO
         
-        !         CALL SPCOPY( PSSP1,PSSP0, N1)
+                CALL SPCOPY( PSSP1,PSSP0, N1)
         
-        ! !     Initialize backward scheme for first time-step
-        !         CALL DDTINI( 0.5 * DT1, IMPLCT )
+        !     Initialize backward scheme for first time-step
+                CALL DDTINI( 0.5 * DT1, IMPLCT )
         
-        ! !     First time step
-        !         CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, .5*DT1, 0., 
-        !      1         TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+        !     First time step
+                CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, .5*DT1, 0., &
+                       TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
         
-        ! !     Save the initial state
-        !         CALL SPEWPY (PGQSP0, PSSP0, OUTFILE)
-        !       ENDIF
+        !     Save the initial state
+                CALL SPEWPY (PGQSP0, PSSP0, OUTFILE)
+              ENDIF
         
         ! !   Initialize leap-frog time-stepping
         !       CALL DDTINI( DT1, IMPLCT )
@@ -452,252 +453,7 @@
         
         !       END
         
-        ! !   ===================================================
-        !       SUBROUTINE TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC,
-        !      1                      EDDIF, ZS)
-        ! !   ===================================================
-        !       IMPLICIT NONE
+    
         
-        !       INCLUDE 'mcons.inc'
-        !       INCLUDE 'spcons.inc'
-        !       INCLUDE 'mgrid.inc'
-        !       INCLUDE 'spgrid.inc'
-        !       INCLUDE 'tmarch.inc'
-        
-        !       COMPLEX  PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  DPGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  PSSP0(0:M1MAX,0:N1MAX)
-        !       COMPLEX  PSSP1(0:M1MAX,0:N1MAX)
-        !       COMPLEX DPSSP(0:M1MAX,0:N1MAX)
-        !       COMPLEX FSP1(0:M1MAX,0:N1MAX)
-        !       REAL TIM, DT1, ROBFAC
-        !       INTEGER TRMM, TIDE, ERATIDE
-              
-        !       REAL EDDIF, ZS(L1MAX)
-        
-        !       REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
-        !       INTEGER TROPINDEX, STRATINDEX
-        !       INTEGER L, M, N, IPGQ
-              
-        !       REAL TEMP0(K2MAX,L1MAX), U0(K2MAX,L1MAX)
-        !       COMPLEX VOR0(0:M1MAX,0:N1MAX,L1MAX)
-        !       COMMON /ZONE/ TEMP0, U0, VOR0
-              
-        !       COMPLEX SURF1(0:100,0:100)
-        !       COMMON /SURFACE/ SURF1
-              
-        !       REAL WCLAMP1, WCLAMP2, WCLAMP3
-        !       INTEGER TROPLVL, STRATLVL
-        !       COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
-              
-        ! !   Compute leap-frog "adiabatic" time tendency
-        !       CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
-        
-        ! !   Include effects of forcing/damping
-        !       CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
-        
-        ! !   Include bottom boundary, mechanical & thermal, GW forcing
-        !       CALL FORCING(DPGQSP, PGQSP1, TIM)
-        
-        ! !   Radiative heating (no effect if mdlrd=1) ! hard coded in ZHU_HEAT
-        !       CALL zhu_HEAT(DPGQSP, PGQSP1, TIM)
-        
-        ! !   trmm latent heating
-        !       IF (TRMM .EQ. 1) CALL TRMM_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, TROPINDEX)
-        
-        ! !   tide heat sources
-        !       IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
-              
-        ! !   ERA (ECMWF) tide forcing
-        !       IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
-        ! !    IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
-        
-        ! !   Make implicit corrections to tendency
-        !       CALL DDTIMP( DPGQSP,DPSSP )
-        
-        ! !   Leap-frog to next time-step
-        !       DO 220 L=1,L1
-        !         DO 220 IPGQ=JVOR,JPOT
-        !           DO 210 N=0,N1
-        !             DO 210 M=0,MIN0(N,M1),1
-        !               FSP1(M,N)= PGQSP0(M,N,IPGQ,L)
-        !      1        + 2.0 * DT1 * DPGQSP(M,N,IPGQ,L)
-        !   210     CONTINUE
-        
-        ! !       Apply Robert filter
-        ! 	      IF (ROBFAC .NE. 0.) THEN
-        !             IF (L .LT. 21) THEN ! 16 ERAh
-        !                 CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        !      1                       FSP1, 0.01 * 50)
-        !                 CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-             
-        ! !           ELSE IF (L .LT. 10) THEN ! 31 ERAh
-        ! !              CALL MODROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        ! !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        ! !   1                       FSP1, ROBFAC * 2)
-        ! !              CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        ! !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-                     
-        !              ELSE
-        ! !               CALL MODROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        ! !   1                           PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        ! !   1                           FSP1, ROBFAC)
-        !                  CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                           PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        !      1                           FSP1, ROBFAC)
-        !                  CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                        PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-        !              ENDIF
-        !           ENDIF
-                  
-        ! !   uncomment if you want to hard-force 
-        ! !        IF (L .GT. -1) THEN
-        ! !          DO M=0,0
-        ! !            DO N=0,N1       
-        ! !                IF (IPGQ .EQ. JPOT) THEN
-        ! !                  FSP1(M,N)= TMNLV(M,N,L)
-        ! !                ELSE
-        ! !                  FSP1(M,N)= VOR0(M,N,L)
-        ! !                ENDIF
-        ! !                PGQSP0(M,N,JDIV,L)= COMPLEX(0,0)
-        ! !                PGQSP1(M,N,JDIV,L)= COMPLEX(0,0)
-        ! !            ENDDO
-        ! !          ENDDO
-        ! !        ENDIF
-        
-        ! 	      CALL SPCOPY( PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), FSP1, N1)
-        !   220 CONTINUE
-        
-        ! !   Surface pressure tendency
-        !       DO 230 N=0,N1
-        !         DO 230 M=0,MIN0(N,M1),1
-        !           FSP1(M,N)= PSSP0(M,N)
-        !      1      + 2.0 * DT1 * DPSSP(M,N)
-             
-        !   230 CONTINUE
-        
-        ! !   Apply Robert filter
-        !       IF (ROBFAC .NE. 0.) THEN
-        !         CALL MODROBFIL( PSSP0, PSSP1, FSP1, ROBFAC)
-        !         CALL SPCOPY( PSSP0, PSSP1, N1)
-        !       ENDIF
-        
-        !       CALL SPCOPY( PSSP1, FSP1, N1)
-        
-        !       RETURN
-        !       END
-        
-        ! !   ===================================================
-        !       SUBROUTINE TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC,
-        !      1                           EDDIF, ZS)
-        ! !   ===================================================
-        !       IMPLICIT NONE
-        
-        !       INCLUDE 'mcons.inc'
-        !       INCLUDE 'spcons.inc'
-        !       INCLUDE  'mgrid.inc'
-        !       INCLUDE  'spgrid.inc'
-        
-        !       COMPLEX  PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  DPGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
-        !       COMPLEX  PSSP0(0:M1MAX,0:N1MAX)
-        !       COMPLEX  PSSP1(0:M1MAX,0:N1MAX)
-        !       COMPLEX DPSSP(0:M1MAX,0:N1MAX)
-        !       COMPLEX FSP1(0:M1MAX,0:N1MAX)
-        !       REAL TIM, DT1, ROBFAC
-        !       INTEGER TRMM, TIDE, ERATIDE
-        
-        !       REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
-        !       INTEGER TROPINDEX, STRATINDEX
-        !       INTEGER L, M, N, IPGQ
-              
-        !       REAL EDDIF, ZS(L1MAX)
-              
-        !       REAL WCLAMP1, WCLAMP2, WCLAMP3
-        !       INTEGER TROPLVL, STRATLVL
-        !       COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
-              
-        ! !   Compute leap-frog "adiabatic" time tendency
-        !       CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
-        
-        ! !   Include effects of forcing/damping
-        !       CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
-        
-        ! !   Include bottom boundary, mechanical & thermal, GW forcing
-        !       CALL FORCING(DPGQSP, PGQSP1, TIM)
-        
-        ! !   Radiative heating (no effect if mdlrd=1) ! hard coded in ZHU_HEAT
-        !       CALL zhu_HEAT(DPGQSP, PGQSP1, TIM)
-        
-        ! !   trmm latent heating
-        !       IF (TRMM .EQ. 1) CALL TRMM_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, TROPINDEX)
-        
-        ! !   tide heat sources
-        !       IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
-              
-        ! !   ERA (ECMWF) tide forcing. SH input file on model levels required.
-        !       IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
-        ! !    IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
-        
-        ! !   Make implicit corrections to tendency
-        !       CALL DDTIMP( DPGQSP,DPSSP )
-        
-        ! !   Leap-frog to next time-step
-        !       DO 220 L=1,L1
-        !         DO 220 IPGQ=JVOR,JPOT
-        !           DO 210 N=0,N1
-        !             DO 210 M=0,MIN0(N,M1),1
-        !               FSP1(M,N)= PGQSP0(M,N,IPGQ,L)
-        !      1        + 2.0 * DT1 * DPGQSP(M,N,IPGQ,L)
-        !   210     CONTINUE
-        
-        ! !       Apply Robert filter
-        ! 	      IF (ROBFAC .NE. 0.) THEN
-        !              IF (L .LT. 21) THEN ! 21 in ERAhh, 11 in ERAz
-        !                 CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        !      1                       FSP1, 0.01 * 50)
-        !                 CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-             
-        ! !           ELSE IF (L .LT. 31) THEN
-        ! !              CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        ! !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        ! !   1                       FSP1, 0.01 * 25)
-        ! !              CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        ! !   1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-        !             ELSE
-        !                 CALL ROBFIL( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L),
-        !      1                       FSP1,  ROBFAC)
-        !                 CALL SPCOPY( PGQSP0(0:M1MAX,0:N1MAX,IPGQ,L), 
-        !      1                       PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), N1)
-        !             ENDIF
-        !           ENDIF
-        
-        ! 	      CALL SPCOPY( PGQSP1(0:M1MAX,0:N1MAX,IPGQ,L), FSP1, N1)
-        !   220 CONTINUE
-        
-        ! !   Surface pressure tendency
-        !       DO 230 N=0,N1
-        !         DO 230 M=0,MIN0(N,M1),1
-        !           FSP1(M,N)= PSSP0(M,N)
-        !      1      + 2.0 * DT1 * DPSSP(M,N)
-             
-        !   230 CONTINUE
-        
-        ! !   Apply Robert filter
-        !       IF (ROBFAC .NE. 0.) THEN
-        !         CALL ROBFIL( PSSP0, PSSP1, FSP1, ROBFAC)
-        !         CALL SPCOPY( PSSP0, PSSP1, N1)
-        !       ENDIF
-        
-        !       CALL SPCOPY( PSSP1, FSP1, N1)
-        
-        !       RETURN
             END program prism
               
