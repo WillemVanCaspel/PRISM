@@ -433,6 +433,11 @@ module IO_mod
               REAL ZW(K1MAX,K2MAX,L1MAX), MW(K1MAX,K2MAX,L1MAX)
               REAL TPR(K1MAX,K2MAX,L1MAX)
               REAL PRS(K1MAX,K2MAX)
+
+              REAL*4 ZW_I(K1MAX,K2MAX,L1MAX), MW_I(K1MAX,K2MAX,L1MAX)
+              REAL*4 TPR_I(K1MAX,K2MAX,L1MAX)
+              REAL*4 PRS_I(K1MAX,K2MAX)
+              REAL*4 GEOB_I(K1MAX, K2MAX)
         
               REAL GEO(K2MAX)
               REAL GEOB(K1MAX, K2MAX)
@@ -453,12 +458,19 @@ module IO_mod
               ENDDO
             
               CALL PHYSIC(PRS,PSSP)
-              
-              WRITE(13) (((ZW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-              WRITE(13) (((MW(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-              WRITE(13) (((TPR(M,N,L),M=1,K1),N=1,K2),L=1,L1)
-              WRITE(13) ((PRS(M,N),M=1,K1),N=1,K2)
-              WRITE(13) ((GEOB(M,N),M=1,K1),N=1,K2)
+
+              ! byte 4 nonsense etc.
+              ZW_I(:,:,:) = ZW(:,:,:)
+              MW_I(:,:,:) = MW(:,:,:)
+              TPR_I(:,:,:) = TPR(:,:,:)
+              PRS_I(:,:) = PRS(:,:)
+              GEOB_I(:,:) = GEOB(:,:)
+
+              WRITE(13) (((ZW_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) (((MW_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) (((TPR_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)
+              WRITE(13) ((PRS_I(M,N),M=1,K1),N=1,K2)
+              WRITE(13) ((GEOB_I(M,N),M=1,K1),N=1,K2)
               
               END
 

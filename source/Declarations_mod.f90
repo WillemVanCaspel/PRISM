@@ -120,6 +120,7 @@ module Declarations_mod
     REAL PSURF
 
     real, dimension(L1MAX)   :: DP, HDP, PLV, PKLV, PKCHLV, ZSTDLV, TSTDLV, HDELP
+    real*4, dimension(L1MAX) :: PLV_I, ZSTDLV_I
     real, dimension(L1MAX+1) :: TREFLV
     real, dimension(0:L1MAX) :: PHLV
 
@@ -183,6 +184,7 @@ module Declarations_mod
 
                    real, dimension(K1MAX) :: DEGLON, LAMBDA
                    real, dimension(K2MAX) :: DEGLAT, PHI, MU, COSPHI, COSINV, G 
+                   real*4, dimension(K2MAX) :: DEGLAT_I
                    real, dimension(0:M1MAX, 0:N2MAX) :: D
                    complex, dimension(0:M1MAX) :: CIM
  
