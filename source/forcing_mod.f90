@@ -6,6 +6,9 @@ module forcing_mod
 
     implicit none
 
+    integer, parameter :: IO_ASSIM = 55, IO_SURF = 46, & 
+                          IO_OCEAN = 45, IO_GWF = 23
+
     contains
 
 !===============================================
@@ -152,8 +155,8 @@ module forcing_mod
       INTEGER MAXMS, MAXNS, TDIMS, BRECLS, NIN
       INTEGER MAXMSURF, MAXNSURF, TDIMSURF, BRECLSURF
       
-      REAL CTIMW(20000)
-      REAL CTIMWS(20000)
+      REAL*4 CTIMW(20000)
+      REAL*4 CTIMWS(20000)
       
       DOUBLE PRECISION SLON(10000), SLAT(10000)
       DOUBLE PRECISION ZOUTU(100000), ZOUTV(100000), ZOUTT(100000)
@@ -176,10 +179,10 @@ module forcing_mod
       COMPLEX SURF2(0:M1MAX,0:N1MAX)
       COMMON /SURFACE/ SURF1
       
-      REAL READU0(200,200,200), READV0(200,200,200)
-      REAL READT0(200,200,200)
-      REAL READU1(200,200,200), READV1(200,200,200)
-      REAL READT1(200,200,200)
+      REAL*4 READU0(200,200,200), READV0(200,200,200)
+      REAL*4 READT0(200,200,200)
+      REAL*4 READU1(200,200,200), READV1(200,200,200)
+      REAL*4 READT1(200,200,200)
       
       DOUBLE PRECISION SURFP0(200,200), SURFP1(200,200), SURFP2(200,200)
 
@@ -211,7 +214,7 @@ module forcing_mod
 	  READ(5,*) NSF
 	  write(6,*) NSF
 
-	  open(unit=23,file=TRIM(OUTFOLD)//TRIM(GWFDUMP))
+	  open(unit=IO_GWF,file=TRIM(OUTFOLD)//TRIM(GWFDUMP))
 	  DO IS=1, NSF
 	    WRITE(6,*) 'Enter zonal waven, frequency (1/day):'
 	    READ (5,*) TT_ZW(IS), TT_OMEG(IS)
@@ -229,12 +232,12 @@ module forcing_mod
 !	    iarg=iarg+1
 	    write(6,'(A)') arg
 
-	    READ(33,*) NLAT,NALT
-	    READ(33,*) (LAT(I), I=1,NLAT)
-	    READ(33,*) (PRES(I), I=1,NALT)
-	    READ(33,*) ((HIN(I,J), I=1,NLAT),J=1,NALT)
-	    READ(33,*) ((PIN(I,J), I=1,NLAT),J=1,NALT)
-	    CLOSE (UNIT=33)
+	    ! READ(33,*) NLAT,NALT
+	    ! READ(33,*) (LAT(I), I=1,NLAT)
+	    ! READ(33,*) (PRES(I), I=1,NALT)
+	    ! READ(33,*) ((HIN(I,J), I=1,NLAT),J=1,NALT)
+	    ! READ(33,*) ((PIN(I,J), I=1,NLAT),J=1,NALT)
+	    ! CLOSE (UNIT=33)
 
 	    DO I=1,NALT
 	      PRES(I)=PRES(I)/1.E3
@@ -243,39 +246,39 @@ module forcing_mod
 	    CALL FINTERP(PRES, NALT, LAT, NLAT, HIN, PIN, &
 	 	 HEAT(1,1,IS), SIP(1,1,IS), COP(1,1,IS))
 
-	    write(23,*) ((hin(i,j),i=1,nlat),j=1,nalt)
-	    write(23,*) ((pin(i,j),i=1,nlat),j=1,nalt)
-	    write(23,*) ((heat(i,j,is),i=1,k2),j=1,l1)
-	    write(23,*) ((cop(i,j,is),i=1,k2),j=1,l1)
+	    write(IO_GWF,*) ((hin(i,j),i=1,nlat),j=1,nalt)
+	    write(IO_GWF,*) ((pin(i,j),i=1,nlat),j=1,nalt)
+	    write(IO_GWF,*) ((heat(i,j,is),i=1,k2),j=1,l1)
+	    write(IO_GWF,*) ((cop(i,j,is),i=1,k2),j=1,l1)
 	  ENDDO
-	  close(23)
+	  close(IO_GWF)
 
 !================================================================
 !.....climatology
 !================================================================
 !	  CALL GETARG(IARG,ARG)
 !.....READ IN FILE DIMENSIONS
-      OPEN(55, FILE=TRIM(INFOLD)//TRIM(INFILE), STATUS='OLD', &
+      OPEN(IO_ASSIM, FILE=TRIM(INFOLD)//TRIM(INFILE), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=1000)
 !	  write(6,'(A)') arg
 !	  IARG=IARG+1 ! from 5 to 6 at this point
 
-      READ (55,REC=1) RECLEN, TDIM, MAXM, MAXN, MAXL
+      READ (IO_ASSIM,REC=1) RECLEN, TDIM, MAXM, MAXN, MAXL
       
 	  NTIMW=TDIM
-	  CLOSE(55)
+	  CLOSE(IO_ASSIM)
 
       BRECL=MAXM*MAXN*MAXL*4 + 8
       MAXMAS=MIN(MAXM - 1,M1)
       MAXNAS=MIN(MAXN - 1,N1)
 
 !.....READ IN ALTITUDE AND TIME ARRAYS
-      OPEN(55, FILE=TRIM(INFOLD)//TRIM(INFILE), STATUS='OLD', &
+      OPEN(IO_ASSIM, FILE=TRIM(INFOLD)//TRIM(INFILE), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=BRECL)
 
-      READ (55,REC=2) RECLEN, (CTIMW(I),I=1,TDIM)
-      READ (55,REC=3) RECLEN, (LOND(I),I=1,MAXM)
-      READ (55,REC=4) RECLEN, (LATD(I),I=1,MAXN)
+      READ (IO_ASSIM,REC=2) RECLEN, (CTIMW(I),I=1,TDIM)
+      READ (IO_ASSIM,REC=3) RECLEN, (LOND(I),I=1,MAXM)
+      READ (IO_ASSIM,REC=4) RECLEN, (LATD(I),I=1,MAXN)
                        
 	  CRANG=CTIMW(NTIMW)-CTIMW(1)
       NIN = K1*K2
@@ -297,11 +300,11 @@ module forcing_mod
 !	    OPEN(UNIT=33,STATUS='OLD',FILE=ARG(1:(INDEX(ARG,' ')-1)),shared)
 !	    iarg=iarg+1
 !	    write(6,'(A)') arg
-	    READ(33,*) NLAT,NALT
-	    READ(33,*) (LAT(I), I=1,NLAT)
-	    READ(33,*) (PRES(I), I=1,NALT)
-	    READ(33,*) ((HIN(I,J), I=1,NLAT),J=1,NALT)
-	    CLOSE (UNIT=33)
+	    ! READ(33,*) NLAT,NALT
+	    ! READ(33,*) (LAT(I), I=1,NLAT)
+	    ! READ(33,*) (PRES(I), I=1,NALT)
+	    ! READ(33,*) ((HIN(I,J), I=1,NLAT),J=1,NALT)
+	    ! CLOSE (UNIT=33)
 
 	    DO I=1,NALT
 	      PRES(I)=PRES(I)/1.E3
@@ -334,22 +337,22 @@ module forcing_mod
 !.....Bottom boundary forcing, use tanh to ramp up.
 
 !.....Read in surface pressure file    
-      OPEN(46, FILE=TRIM(INFOLD)//TRIM('surface_geopotential.dat'), STATUS='OLD', &
+      OPEN(IO_SURF, FILE=TRIM(INFOLD)//TRIM('surface_geopotential.dat'), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=1000)
     
-      READ (46,REC=1) RECLEN, MAXMSURF, MAXNSURF
-      CLOSE(46)
+      READ (IO_SURF,REC=1) RECLEN, MAXMSURF, MAXNSURF
+      CLOSE(IO_SURF)
       
       BRECLSURF= MAXMSURF*MAXNSURF*8 + 8
       
-      OPEN(46, FILE=TRIM(INFOLD)//TRIM('surface_geopotential.dat'), STATUS='OLD', &
+      OPEN(IO_SURF, FILE=TRIM(INFOLD)//TRIM('surface_geopotential.dat'), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=BRECLSURF)
     
-      READ (46,REC=2)  RECLEN, (LONDG(M), M=1, MAXMSURF)
-      READ (46,REC=3)  RECLEN, (LATDG(M), M=1, MAXNSURF)
+      READ (IO_SURF,REC=2)  RECLEN, (LONDG(M), M=1, MAXMSURF)
+      READ (IO_SURF,REC=3)  RECLEN, (LATDG(M), M=1, MAXNSURF)
     
 !.....read single surface level field (1000 hpa)
-      READ (46,REC=4)  RECLEN, &
+      READ (IO_SURF,REC=4)  RECLEN, &
            ((SURFP2(M,N), M=1, MAXMSURF), N=1, MAXNSURF)
     
       NIN = K1*K2
@@ -376,23 +379,23 @@ module forcing_mod
                   
       CALL ZEROSP(SURF2,N1)
       CALL SPECTR(SURF2,INTERPU)
-      CLOSE(46)
+      CLOSE(IO_SURF)
       
 !.....Read in ocean surface file    
-      OPEN(45, FILE=TRIM(INFOLD)//TRIM(OCEANWAVE), STATUS='OLD', &
+      OPEN(IO_OCEAN, FILE=TRIM(INFOLD)//TRIM(OCEANWAVE), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=1000)
     
-      READ (45,REC=1) RECLEN, TDIMS, MAXMS, MAXNS
-      CLOSE(45)
+      READ (IO_OCEAN,REC=1) RECLEN, TDIMS, MAXMS, MAXNS
+      CLOSE(IO_OCEAN)
       
       BRECLS= MAXMS*MAXNS*8 + 8
       
-      OPEN(45, FILE=TRIM(INFOLD)//TRIM(OCEANWAVE), STATUS='OLD', &
+      OPEN(IO_OCEAN, FILE=TRIM(INFOLD)//TRIM(OCEANWAVE), STATUS='OLD', &
 	       FORM='UNFORMATTED', ACCESS='DIRECT', RECL=BRECLS)
     
-      READ (45,REC=2) RECLEN, (CTIMWS(I),I=1,TDIMS) ! DOY
-      READ (45,REC=3) RECLEN, (LONDS(I),I=1,MAXMS) 
-      READ (45,REC=4) RECLEN, (LATDS(I),I=1,MAXNS) 
+      READ (IO_OCEAN,REC=2) RECLEN, (CTIMWS(I),I=1,TDIMS) ! DOY
+      READ (IO_OCEAN,REC=3) RECLEN, (LONDS(I),I=1,MAXMS) 
+      READ (IO_OCEAN,REC=4) RECLEN, (LATDS(I),I=1,MAXNS) 
       
 !     Time shift ocean tide file 
       DO I=1,TDIMS
@@ -509,7 +512,7 @@ module forcing_mod
       IF (NDS .NE. ND0S) THEN
  
         NIN = K1*K2
-        READ (45,REC=4+NDS) RECLEN, &
+        READ (IO_OCEAN,REC=4+NDS) RECLEN, &
           ((SURFP0(I,J), I=1, MAXMS), J=1, MAXNS)
      
         COUNTER = 1 ! sigprim lat and lon interpolation grid
@@ -535,7 +538,7 @@ module forcing_mod
         CALL ZEROSP(SURF0,N1)
         CALL SPECTR(SURF0,INTERPU)
                            
-        READ (45,REC=5+NDS) RECLEN, &
+        READ (IO_OCEAN,REC=5+NDS) RECLEN, &
           ((SURFP1(I,J), I=1, MAXMS), J=1, MAXNS)
                 
         COUNTER = 1 ! sigprim lat and lon interpolation grid
@@ -561,7 +564,7 @@ module forcing_mod
         CALL ZEROSP(SURF1,N1)
         CALL SPECTR(SURF1,INTERPU)
         
-        WRITE(6,*) 'TTIM:', NDS, DAYS, CTIMWS(NDS)
+        WRITE(6,*) 'TTIM:', NDS, DAYS, CTIMWS(NDS) ! identical with old prism
         ND0S=NDS
       ENDIF
             
@@ -742,11 +745,11 @@ module forcing_mod
       if (ND0 .ne. ND) then
         WRITE(6,*) ND
         
-        READ (55,REC=2+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=2+3*ND) RECLEN, &
            (((READU0(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
-        READ (55,REC=3+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=3+3*ND) RECLEN, &
            (((READV0(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
-        READ (55,REC=4+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=4+3*ND) RECLEN, &
            (((READT0(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
                           
         DO L=1,MAXL ! interpolate 2d
@@ -811,11 +814,11 @@ module forcing_mod
           
         ENDDO
      
-        READ (55,REC=5+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=5+3*ND) RECLEN, &
            (((READU1(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
-        READ (55,REC=6+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=6+3*ND) RECLEN, &
            (((READV1(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
-        READ (55,REC=7+3*ND) RECLEN, &
+        READ (IO_ASSIM,REC=7+3*ND) RECLEN, &
            (((READT1(M,N,L), M=1, MAXM), N=1, MAXN),L=1,MAXL)
      
         COUNTER = 1 ! sigprim lat and lon interpolation grid

@@ -1,4 +1,4 @@
-module heating_Mod
+module heating_mod
 
     use Declarations_mod
     use Prognos_sigma_mod
@@ -26,7 +26,7 @@ module heating_Mod
  
       INTEGER I, J, L, M, N, ND, ND0, K, X, Y
  
-      REAL CTIMW(20000)
+      REAL*4 CTIMW(20000)
  
       REAL DAY, WT0, WT1, CRANG, DELT
       REAL TIME0
@@ -40,8 +40,8 @@ module heating_Mod
       INTEGER BRECL, RECLEN
       INTEGER TDIM, MAXM, MAXN, MAXL, TOPLVL, MXM, MXN
       
-      REAL READN0(200,200,200)
-      REAL READN1(200,200,200)
+      REAL*4 READN0(200,200,200)
+      REAL*4 READN1(200,200,200)
       
       COMPLEX HEATIN0(0:M1MAX,0:N1MAX,L1MAX)
       COMPLEX HEATIN1(0:M1MAX,0:N1MAX,L1MAX)
@@ -228,4 +228,4 @@ module heating_Mod
  
     END subroutine PY_HEAT
 
-end module heating_Mod
+end module heating_mod

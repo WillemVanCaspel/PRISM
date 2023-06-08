@@ -25,7 +25,7 @@ LLIB = $(shell nc-config --flibs)
 F90 = gfortran
 
 # GNU gfortran compiler (version 4.4.3 or later)
-F90FLAGS = -ffree-line-length-none -O2 -fdec -fdefault-real-8 -fdefault-double-8
+F90FLAGS = -ffree-line-length-none -O2 -fdec -fdefault-real-8 -fdefault-double-8 -finit-local-zero -fno-automatic
 #-fdefault-real-8 -fdefault-double-8
 #-fallow-argument-mismatch not working, but should in principle remove REAL(8) and REAL(4) mismatch problem
 ###################################################

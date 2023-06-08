@@ -8,7 +8,8 @@
               use Prognos_sigma_mod
               use Config_mod,           only: Config_Constants
               use IO_mod    
-              use heating_Mod          
+              use heating_mod         
+              use timestep_mod 
         
               IMPLICIT NONE
         
@@ -381,79 +382,79 @@
                 CALL SPEWPY (PGQSP0, PSSP0, OUTFILE)
               ENDIF
         
-        ! !   Initialize leap-frog time-stepping
-        !       CALL DDTINI( DT1, IMPLCT )
-        ! !   ROBFAC = .01
+        !   Initialize leap-frog time-stepping
+              CALL DDTINI( DT1, IMPLCT )
+          ROBFAC = .01
         
-        ! !   Time-march
-        !       DO IT=1,NSTEP
-        !         TIM=TIM+DT1
+        !   Time-march
+              DO IT=1,NSTEP
+                TIM=TIM+DT1
                 
-        ! !     ramp down robfac to avoid crashing soon after initialization  
-        !         ROBINIT = 1.0
-        !         ROBRAMP = ROBINIT - 
-        !      1            (ROBINIT - ROBFAC)*(1 - EXP(-(TIM-TIME0)/(5*86400.)))
+        !     ramp down robfac to avoid crashing soon after initialization  
+                ROBINIT = 1.0
+                ROBRAMP = ROBINIT - &
+                          (ROBINIT - ROBFAC)*(1 - EXP(-(TIM-TIME0)/(5*86400.)))
              
-        ! !     solar declination for zhu heating
-        !         DEC=ASIND(COS((-ABS(TIM/86400./30.5)+5.6)/6.*3.14159)*SIND(23.))
+        !     solar declination for zhu heating
+                DEC=ASIND(COS((-ABS(TIM/86400./30.5)+5.6)/6.*3.14159)*SIND(23.))
               
-        ! !     old robfil to damp physical mode after initialization to avoid crash
-        !         IF (ROBRAMP .LT. ROBFAC + 0.01) THEN
-        !           CALL TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, 
-        !      1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
-        !         ELSE
-        !           CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, 
-        !      1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
-        !         ENDIF
+        !     old robfil to damp physical mode after initialization to avoid crash
+                IF (ROBRAMP .LT. ROBFAC + 0.01) THEN
+                  CALL TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, &
+                    TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+                ELSE
+                  CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, &
+                    TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+                ENDIF
         
-        !         IF (MOD(IT,NSKIP).EQ.0) THEN
-        !           CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
-        !         ENDIF
-        !       ENDDO
+                IF (MOD(IT,NSKIP).EQ.0) THEN
+                  CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
+                ENDIF
+              ENDDO
         
-        !       CLOSE( 12 )
+              CLOSE( 12 )
         
-        !       IF (FSF .eq. 1) THEN
-        ! !     CALL GETARG(IARG,ARG)! SAVE FOR CONTINUATION
-        ! !     OPEN(UNIT=11,FILE=ARG(1:(INDEX(ARG,' ')-1)), form='UNFORMATTED')
-        ! !     iarg=iarg+1
-        !         WRITE(11) MMAX,NMAX,NLEV,PBOT,PLID,TIM,DT1
+              IF (FSF .eq. 1) THEN
+        !     CALL GETARG(IARG,ARG)! SAVE FOR CONTINUATION
+        !     OPEN(UNIT=11,FILE=ARG(1:(INDEX(ARG,' ')-1)), form='UNFORMATTED')
+        !     iarg=iarg+1
+                WRITE(11) MMAX,NMAX,NLEV,PBOT,PLID,TIM,DT1
         
-        !         DO L=1,NLEV
-        ! 	      DO IPGQ=JVOR,JPOT
-        !             WRITE(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX))
-        !      1        ,N=0,NMAX)
-        !             WRITE(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX))
-        !      1        ,N=0,NMAX)
-        !           ENDDO
-        !         ENDDO
+                DO L=1,NLEV
+        	      DO IPGQ=JVOR,JPOT
+                    WRITE(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX)) &
+                      ,N=0,NMAX)
+                    WRITE(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX)) &
+                      ,N=0,NMAX)
+                  ENDDO
+                ENDDO
         
-        !         WRITE(11)((PSSP0(M,N),M=0,MIN0(N,MMAX))
-        !      1   ,N=0,NMAX)
-        !         WRITE(11)((PSSP1(M,N),M=0,MIN0(N,MMAX))
-        !      1   ,N=0,NMAX)
-        !         CLOSE(11)
-        !       ENDIF
+                WRITE(11)((PSSP0(M,N),M=0,MIN0(N,MMAX)) &
+                 ,N=0,NMAX)
+                WRITE(11)((PSSP1(M,N),M=0,MIN0(N,MMAX)) &
+                 ,N=0,NMAX)
+                CLOSE(11)
+              ENDIF
         
-        !       CALL cpu_time(cpt2)
-        !       CALL gettim(ihr2,imin2,isec2,ihs2)
+              CALL cpu_time(cpt2)
+              CALL gettim(ihr2,imin2,isec2,ihs2)
         
-        !       IF (ihr2-ihr1 .lt. 0) THEN
-        ! 	    ihr2=ihr2+24
-        !         isec2=(ihr2-ihr1)*3600 + (imin2-imin1)*60 + isec2-isec1
-        !         ihr1=isec2/3600
-        !         imin1=mod(isec2/60,60)
-        ! 	    isec1=mod(isec2,60)
+              IF (ihr2-ihr1 .lt. 0) THEN
+        	    ihr2=ihr2+24
+                isec2=(ihr2-ihr1)*3600 + (imin2-imin1)*60 + isec2-isec1
+                ihr1=isec2/3600
+                imin1=mod(isec2/60,60)
+        	    isec1=mod(isec2,60)
         
-        !         WRITE(6,"(a13,i10,a9,i3,':',i2,':',i2,' hr:min:sec')")
-        !      1     'elapsed time:',isec2,' seconds,',ihr1,imin1,isec1
-        !         WRITE(6,*) 'CPU time: ',cpt2-cpt1
-        !         WRITE(6,*) 'program complete'
-        !       ENDIF
+                WRITE(6,"(a13,i10,a9,i3,':',i2,':',i2,' hr:min:sec')") &
+                   'elapsed time:',isec2,' seconds,',ihr1,imin1,isec1
+                WRITE(6,*) 'CPU time: ',cpt2-cpt1
+                WRITE(6,*) 'program complete'
+              ENDIF
         
-        !       END
+            END program prism
         
     
         
-            END program prism
+        ! END program prism
               
