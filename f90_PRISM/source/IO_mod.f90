@@ -466,6 +466,8 @@ module IO_mod
               PRS_I(:,:) = PRS(:,:)
               GEOB_I(:,:) = GEOB(:,:)
 
+              WRITE(*,*) 'u wont sum son? : ', zw_i(5,5,60)
+
               WRITE(13) (((ZW_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)
               WRITE(13) (((MW_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)
               WRITE(13) (((TPR_I(M,N,L),M=1,K1),N=1,K2),L=1,L1)

@@ -39,13 +39,10 @@ module timestep_mod
       REAL WCLAMP1, WCLAMP2, WCLAMP3
       INTEGER TROPLVL, STRATLVL
       COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
-      
 !     Compute leap-frog "adiabatic" time tendency
       CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
-
 !     Include effects of forcing/damping
       CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
-
 !     Include bottom boundary, mechanical & thermal, GW forcing
       CALL FORCING(DPGQSP, PGQSP1, TIM)
 
@@ -60,7 +57,7 @@ module timestep_mod
 !       IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
       
 !     ERA (ECMWF) tide forcing. SH input file on model levels required.
-      IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+     IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
 !      IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
 
 !     Make implicit corrections to tendency
@@ -167,10 +164,10 @@ module timestep_mod
              CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
        
        !   Include effects of forcing/damping
-             CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
+         !    CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
        
        !   Include bottom boundary, mechanical & thermal, GW forcing
-             CALL FORCING(DPGQSP, PGQSP1, TIM)
+            ! CALL FORCING(DPGQSP, PGQSP1, TIM)
        
     !    !   Radiative heating (no effect if mdlrd=1) ! hard coded in ZHU_HEAT
     !          CALL zhu_HEAT(DPGQSP, PGQSP1, TIM)
@@ -182,7 +179,7 @@ module timestep_mod
     !          IF (tide .eq. 1) CALL TIDE_heat(DPGQSP, TIM)
              
        !   ERA (ECMWF) tide forcing
-             IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
+            ! IF (ERATIDE .EQ. 1) CALL PY_HEAT(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
        !    IF (ERATIDE .EQ. 1) CALL PY_HEATWAC(DPGQSP, TIM, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX)
        
        !   Make implicit corrections to tendency

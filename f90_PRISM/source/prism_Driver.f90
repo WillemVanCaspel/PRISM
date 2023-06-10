@@ -37,6 +37,9 @@
               REAL ZBOT, ZLID
               REAL DZ0, DELZ, ZLO, WIDTHREF
               REAL ANDREWS, Z1, Z2, ETA0, A1, A2
+
+              real*4 dummy1
+              complex*8 dummy2
               
               COMPLEX  PGQSP0(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
               COMPLEX  PGQSP1(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
@@ -86,6 +89,9 @@
               REAL WCLAMP1, WCLAMP2, WCLAMP3
               INTEGER TROPLVL, STRATLVL
               COMMON /WAVECLAMP/ WCLAMP1, WCLAMP2, WCLAMP3, TROPLVL, STRATLVL   
+              
+              dummy2 = cmplx(1., 2.)
+              !call testing(dummy2)
              
           !================================================================
           !read input from file
@@ -386,7 +392,7 @@
               CALL DDTINI( DT1, IMPLCT )
           ROBFAC = .01
         
-        !   Time-march
+        !   Time-march -----------------------------------
               DO IT=1,NSTEP
                 TIM=TIM+DT1
                 
@@ -400,9 +406,10 @@
               
         !     old robfil to damp physical mode after initialization to avoid crash
                 IF (ROBRAMP .LT. ROBFAC + 0.01) THEN
-                  CALL TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, &
-                    TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+                  ! CALL TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, &
+                  !   TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
                 ELSE
+                  
                   CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, &
                     TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
                 ENDIF

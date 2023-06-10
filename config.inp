@@ -1,8 +1,8 @@
-"/home/wim/Desktop/PRISM_f90/input/"      Input folder
-"/home/wim/Desktop/PRISM_f90/output/"     Output folder
+"/home/wim/Desktop/PRISM_f90/input/"               Input folder
+"/home/wim/Desktop/PRISM_f90/output/"              Output folder
 nav_2013_ERAn_1dm_grid.dat                         specified dynamics (u,v,t) input file name
 FES2013_ssw_hrly_grid.dat                          Surface geopotential file  
-test.dat                                         Output file name
+test.dat                                           Output file name
 era5_2013_ssw_ERAn_hrly_3dm_grid.dat               Tide forcing input file name
 waccmx_2013_ssw_ERAn_grid.dat                      Tide forcing input file name
 merra_tprof_dec08.dat                              Initialized temperature field from file
@@ -13,12 +13,12 @@ gwfdump.dat                                        Dump file used in GWF
 curtis.dat                                         Curtis matrices
 0,0                                                use final save file? continue from file? (1/0=y/n)
 170.,170.,0.,0.,0.                                 zbot, zlid, dz0, delz, Zlo
-0.10,161,1.0,0                                     dt(hrs), duration (days), interval (hrs), T0 (DOY)
+0.1,5,1.0,0                                        dt(hrs), duration (days), interval (hrs), T0 (DOY)
 9,23,0.000625                                      max m, n (horiz truncation), starting zwn (used in sigprim_3heatm)
-1.0,1.0,1.0,114,65                                 Multi. factors TROP, STRAT, MESO heat, TPP STP ML height (83,50)
+1.0,0.025,1.0,114,65                               Multi. factors TROP, STRAT, MESO heat, TPP STP ML height (83,50)
 1.0,1.0,1.0,0.0                                    DAMP8 RDAMP NFAC SFRIC (rdamp is ion drag)
-0.0,200.,0.0,200.,20.0,250,40.,100.,0.01,0.00,2.5  clamp & sponge params
-0.00,0.00,0.00,140,51                        wave field TROP, STRAT, MESO clamp params, TTP and STP ML height. 
+4.0,200.,4.0,200.,20.0,250,40.,100.,0.01,0.00,2.5  clamp & sponge params
+0.3250,0.3250,0.3250,140,51                        wave field TROP, STRAT, MESO clamp params, TTP and STP ML height. 
 0.0,1.0,0.0,1.5                                    BOTTOM BOUNDARY SPONGE PARAMS (AMP, LOC, WIDTH)
 0.0,0.0,1.0                                        Teddy, Ueddy (factor x cmam_kzz) moldac (unused in sigprim_cycle)
 1,0,0,1                                            mdlrd, trmm, tide, eratide

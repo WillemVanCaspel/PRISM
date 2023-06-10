@@ -979,9 +979,9 @@ module forcing_mod
 		  IF (FLAG .EQ. 0) C(L)=C0(L)+UCOMP(IZ0(J,N))
 		ENDDO
 
-		CALL GWF &
-	 	     (C(IC0), B0(IC0,IAZ,J,N), EPS(J,N), KH(J,N), &
-	 	  ZG, RHO, UCOMP, BF, L1, MC, IZ0(J,N), GW, TLEV(N))
+		! CALL GWF &
+	 	!      (C(IC0), B0(IC0,IAZ,J,N), EPS(J,N), KH(J,N), &
+	 	!   ZG, RHO, UCOMP, BF, L1, MC, IZ0(J,N), GW, TLEV(N))
 
 		DO L=1,L1
 !c		DO L=12,L1  !for gwup

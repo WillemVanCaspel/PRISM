@@ -1,0 +1,14 @@
+2d_interp.o : 2d_interp.f90 r8_lib.o linpack_mod.o
+Config_mod.o : Config_mod.f90 r8_lib.o linpack_mod.o
+coolmd_mod.o : coolmd_mod.f90 r8_lib.o linpack_mod.o
+Declarations_mod.o : Declarations_mod.f90 r8_lib.o linpack_mod.o
+forcing_mod.o : forcing_mod.f90 Prognos_sigma_mod.o Declarations_mod.o splib2_mod.o r8_lib.o linpack_mod.o
+heating_mod.o : heating_mod.f90 forcing_mod.o splib2_mod.o Prognos_sigma_mod.o Declarations_mod.o r8_lib.o linpack_mod.o
+IO_mod.o : IO_mod.f90 heating_mod.o Prognos_sigma_mod.o Config_mod.o Declarations_mod.o r8_lib.o linpack_mod.o
+prism_Driver.o : prism_Driver.f90 timestep_mod.o heating_mod.o IO_mod.o Config_mod.o Prognos_sigma_mod.o Declarations_mod.o Timing_mod.o r8_lib.o linpack_mod.o
+Prognos_sigma_mod.o : Prognos_sigma_mod.f90 splib2_mod.o coolmd_mod.o Declarations_mod.o r8_lib.o linpack_mod.o
+splib2_mod.o : splib2_mod.f90 Declarations_mod.o r8_lib.o linpack_mod.o
+timestep_mod.o : timestep_mod.f90 forcing_mod.o heating_mod.o Prognos_sigma_mod.o Declarations_mod.o r8_lib.o linpack_mod.o
+Timing_mod.o : Timing_mod.f90 r8_lib.o linpack_mod.o
+linpack_mod.o : linpack_mod.f 
+r8_lib.o : r8_lib.f linpack_mod.o

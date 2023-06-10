@@ -1,0 +1,16 @@
+C TMARCH.INC
+C
+C Must include MCONS & SPCONS beforehand. This is included in routines of
+C PROGNOS.FOR
+C
+C Parameters used for time-marching
+C Set in DDTINI:
+      REAL IMPFAC, DT, DTFAC, UD8COR, TD8COR
+      COMMON/TMAR1/ IMPFAC, DT, DTFAC, UD8COR(0:N1MAX), TD8COR(0:N1MAX)
+C
+C Set in VERINI:
+      REAL USDRAG,  VVISC
+	  COMPLEX TMNLV
+      COMPLEX URLXLV, TRLXLV
+      COMMON/CDAMP/ USDRAG, URLXLV(L1MAX), VVISC(L1MAX),
+     1              TRLXLV(L1MAX), TMNLV(0:M1MAX,0:N1MAX,L1MAX)

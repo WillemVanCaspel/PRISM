@@ -1,0 +1,9 @@
+#=============================================================================
+FOBJ ?=	\
+	2d_interp.o coolmd.o dry_adjust.o forcing_read.o gettim.o gwf.o htuvmd.o  \
+	initialize.o linpack.o prognos_sigma.o r8_lib.o read_tide_heat.o \
+	read_tide_waccm.o sigprim_driver.o splib2.o \
+    spline2.o tide_heat.o trmm_heat_flex.o zhu_heat.o
+
+# default target
+all:
