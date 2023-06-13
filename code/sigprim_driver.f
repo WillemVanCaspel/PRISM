@@ -114,7 +114,7 @@ C     ================================================================
       read(5,*) fsf,cff
       write(6,*) fsf,cff
 
-      NTRACE=0 ! optionally set to .GT. 0
+      NTRACE=1 ! optionally set to .GT. 0
       iarg=1
 
 c     DZ0 and DELZ can be the same.  Set Dz0=0 for NCEP grid up to 30 km
@@ -430,21 +430,15 @@ c       solar declination for zhu heating
         DEC=ASIND(COS((-ABS(TIM/86400./30.5)+5.6)/6.*3.14159)*SIND(23.))
 
 C       introduce tracer field at model-step T_Tracer
-        if (IT .eq. T_Tracer) then ! this is now timestep...
-          write(*,*) 'introducing tracer field'
-          if (ntrace .gt. 0) then
-            do I=1,NTRACE
-              do L=30,60,1
-                do IPGQ=JTR1,JPOT+NTRACE
-                  TRC(:,:,I,L) = 400.
-                  CALL SPECTR( PGQSP0(0,0,IPGQ,L), TRC(:,:,I,L) )
-                  CALL SPCOPY( PGQSP1(0,0,IPGQ,L), PGQSP0(0,0,IPGQ,L), N1)
-                end do 
-              end do ! nlev
-            end do ! ntrace
-          end if 
-
-C           convert to spectral space and add to pgqsp
+        if (IT .eq. T_Tracer .and. ntrace .gt. 0) then 
+          write(*,*) 'introducing tracer field(s)'
+          do I=1,NTRACE
+            do L=tracer_start,tracer_end
+              TRC(:,:,I,L) = tracer_val
+              CALL SPECTR( PGQSP0(0,0,JTR1+I-1,L), TRC(:,:,I,L) )
+              CALL SPCOPY( PGQSP1(0,0,JTR1+I-1,L), PGQSP0(0,0,JTR1+I-1,L), N1)
+            end do ! nlev
+          end do ! ntrace
         end if
       
 C       old robfil to damp physical mode after initialization to avoid crash
