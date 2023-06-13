@@ -2,7 +2,7 @@
 
 This repository contains the source code for the Primitive Equations In Spectral coordinates Model (PRISM) tidal and planetary wave model. The core Fortran77 scripts are organized in the code directory, while useful Python scripts for input and output processing are located in the pyscripts directory. 
 
-PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background atmospheric nudging capabilities, and its flexible specification of thermal and gravitational tidal forcing terms. 
+PRISM has been used primarily for the simulation of upper atmospheric global-scale waves. Key features are its 3-dimensional background atmospheric nudging capabilities and its flexible specification of thermal and gravitational tidal forcing terms. 
 
 The current version of the model has been tested with the gfortran compiler on linux systems, but past versions have also been compiled successfully using the PGI compiler. Compiler flags and commands specific to gfortran are included in the code/Makefile file. Running the .py scripts requires any version of Python 3 to be installed, along with the dependencies defined inside the scripts.
 
