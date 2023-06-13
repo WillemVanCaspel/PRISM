@@ -114,7 +114,7 @@ C     ================================================================
       read(5,*) fsf,cff
       write(6,*) fsf,cff
 
-      NTRACE=1 ! optionally set to .GT. 0
+      NTRACE=0 ! optionally set to .GT. 0
       iarg=1
 
 c     DZ0 and DELZ can be the same.  Set Dz0=0 for NCEP grid up to 30 km
