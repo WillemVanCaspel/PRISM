@@ -4864,7 +4864,10 @@ def uvt_read_altitude_grid(file,
 
     # read in grid dimensions / metadata gunk
     md = f.read_record(dtype=np.int32)
-    (k1, k2, m, n, l) = (md[0], md[1], md[2], md[3], md[4])
+    if len(md) < 10: # for files without tracers
+        (k1, k2, m, n, l, ntrace) = (md[0], md[1], md[2], md[3], md[4], 0)
+    else:           # if file does contain tracers
+        (k1, k2, m, n, l, ntrace) = (md[0], md[1], md[2], md[3], md[4], md[9])
     
     slv = f.read_record(dtype=np.float32)
     lat = f.read_record(dtype=np.float32)
@@ -4885,6 +4888,10 @@ def uvt_read_altitude_grid(file,
         surf_p = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
         geob = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
         
+        for n in range(ntrace):
+            f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
+        
+        
     for t_steps in range(n_steps):
         # read in and interpolate 
         u = f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
@@ -4892,6 +4899,9 @@ def uvt_read_altitude_grid(file,
         t = f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
         surf_p = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
         geob = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
+        
+        for n in range(ntrace):
+            f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
                     
         # change from [x,y,z] to python standard [z,y,x]
         u = np.swapaxes(u,0,2)
@@ -4997,12 +5007,18 @@ def read_uv_grid(file,
 
     # read in grid dimensions / metadata gunk
     md = f.read_record(dtype=np.int32)
-    (k1, k2, m, n, l) = (md[0], md[1], md[2], md[3], md[4])
+
+    if len(md) < 10: # for files without tracers
+        (k1, k2, m, n, l, ntrace) = (md[0], md[1], md[2], md[3], md[4], 0)
+    else:           # if file does contain tracers
+        (k1, k2, m, n, l, ntrace) = (md[0], md[1], md[2], md[3], md[4], md[9])
     
     slv = f.read_record(dtype=np.float32)
     lat = f.read_record(dtype=np.float32)
     lon = np.linspace(0,360,k1,endpoint=False)
     zstdlvl = f.read_record(dtype=np.float32)
+    
+    trc = np.zeros((k1,k2,l,ntrace))
     
     # np.save('/home/wim/Desktop/Projects/Model/vertical_grids/sigprim_lvls_ERAn.npy',slv)
         
@@ -5013,16 +5029,20 @@ def read_uv_grid(file,
         t = f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
         surf_p = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
         geob = f.read_record(dtype=np.float32).reshape(k1,k2,order='F')
-        
+    
+        for n in range(ntrace):
+            trc[:,:,:,n] = f.read_record(dtype=np.float32).reshape(k1,k2,l,order='F')
+    
     # change from [x,y,z] to python standard [z,y,x]
     u = np.swapaxes(u,0,2)
     v = np.swapaxes(v,0,2)
     t = np.swapaxes(t,0,2)
     surf_p = np.exp(np.swapaxes(surf_p,0,1))
     geob = np.swapaxes(geob,0,1)
+    trc = np.swapaxes(trc,0,2)
             
     f.close()
         
-    return u, v, t, lat, lon, surf_p, geob
+    return u, v, t, lat, lon, surf_p, geob, trc
 
 #%%

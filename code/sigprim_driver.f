@@ -37,6 +37,11 @@ C     SIGMA-COORDINATE PRIMITIVE EQUATION MODEL DRIVER
       INTEGER NSTEP, NSKIP, ZLUN
       INTEGER TRMM, TIDE, ERATIDE
 
+      real, parameter :: PI=3.1415926
+      real TRC(K1MAX,K2MAX,NPGQ-3,L1MAX) ! NPGQ hardcoded to 6 for now (3 dynamc., 3 tracer)
+      integer tracer_start, tracer_end ! tracer vertical level indices
+      real tracer_val ! tracer initial value within domain specified by _start, _end
+
       REAL HCOOL, CMAM_KZZ
       EXTERNAL  HCOOL, CMAM_KZZ
 
@@ -109,7 +114,7 @@ C     ================================================================
       read(5,*) fsf,cff
       write(6,*) fsf,cff
 
-      NTRACE=0 ! no tracers. Tracer advection scheme does not work.
+      NTRACE=1 ! optionally set to .GT. 0
       iarg=1
 
 c     DZ0 and DELZ can be the same.  Set Dz0=0 for NCEP grid up to 30 km
@@ -142,6 +147,17 @@ c     DZ0 and DELZ can be the same.  Set Dz0=0 for NCEP grid up to 30 km
       WRITE(6,*)  'NEWT COOLING FACTOR,  & SURFACE FRICTION'
       READ(5,*)  DAMP8, RDAMP, NFAC, SFRIC
       WRITE(6,*)  DAMP8, RDAMP, NFAC, SFRIC
+
+      WRITE(6,*) 'Use nudging coefficient profile, yes/no (1/0), Z_LVL, and amplitude (d-1)'
+      READ(5,*)  nudge_coeff, Z_LVL, NudgeAmp
+      WRITE(6,*)  nudge_coeff, Z_LVL, NudgeAmp
+
+      WRITE(6,*) 'Tracer start lvl, end level, value, start day (days since model start)'
+      READ(5,*)  tracer_start, tracer_end, tracer_val, t_tracer
+      WRITE(6,*)  tracer_start, tracer_end, tracer_val, t_tracer
+
+C     convert from days to model time steps. +1 because time-index starts at 1
+      T_Tracer = T_Tracer / (DT1 / 86400.) + 1
 
       WRITE(6,*) 'Lower and upper sponge params: '
       READ(5,*) ALPHA0, TTOP, ALPHA1, WTOP, WAMP, WLEV, WWID, SMAX, SMIN, BFAC, WIDTHREF
@@ -205,6 +221,8 @@ C     Rayleigh surface friction and Newtonian cooling profiles
         IF (Z .GT. 0.7) THEN
            UDAMP(L)= AMPBOT * DAYINV * (0.7 - Z) / (0.7 - 1.0)
         ENDIF
+        Z_LBC = 0. ! PRISM surface
+        NudgeFac(L) = NudgeAmp * DAYINV * MAX(0.,COS(PI / 2.0 * ( (-ALOG(Z) - Z_LBC) / (Z_LVL - Z_LBC) ) ) ) ** 2.0
         
 C       standard newtonian cooling profile
         TDAMP(L) = NFAC * HCOOL(PP(L)) * DAYINV 
@@ -218,7 +236,7 @@ C     Specified dynamics truncated at MMAX if input trunc exceeds MMAX
       WRITE(6,*) 'Specified Dynamics truncated at M =', SDTRUNC, DAMPTRUNC
                   
 C     Lower sponge - clamp mean winds and temps. Allow for separate weights and layer top
-	  ALPHA0=ALPHA0*DAYINV
+	ALPHA0=ALPHA0*DAYINV
       ALPHA1=ALPHA1*DAYINV
 
       DO L=1,NLEV
@@ -232,7 +250,7 @@ c     wdamp damps waves, mdamp relaxes mean vorticity to VOR0 above WLEV
       WRITE(6,*), WWID, WWID, WWID
       WRITE(6,*) WLEV
       
-	  WAMP=WAMP*DAYINV
+	! WAMP=WAMP*DAYINV
       WAMP=2.5e-4  ! 2.5e-4 for Hong and Lindzen solar maximum conditions
       SMAX=SMAX*DAYINV
       SMIN=SMIN*DAYINV
@@ -298,7 +316,7 @@ C     Compute standard atmospheric mean and radiative equilibrium temperature pr
 
 c     Background eddy diffusion and molecular diffusion profiles
       WRITE(6,*) '      z','  vervis ',' diffc ','    udamp ',' tdamp ',
-     1    '  wdamp ','   mdamp',  '  alphaw ',  ' alphat '
+     1    '  wdamp ','   mdamp',  '  alphaw ',  ' alphat ', '  nudgefac'
           
       DO L=1,NLEV
         Z = ZS(L) 
@@ -337,9 +355,9 @@ c     Background eddy diffusion and molecular diffusion profiles
         VERVIS(L)= VERVIS(L) + ANDREWS
         DIFFC(L)=DIFFC(L) + ANDREWS
         
-        WRITE(6,'(9f8.2)') z, vervis(L), diffc(L),
+        WRITE(6,'(10f8.2)') z, vervis(L), diffc(L),
      1      udamp(l)/dayinv, tdamp(l)/dayinv, wdamp(l)/dayinv,
-     1      mdamp(l)/dayinv, alphaw(L)/dayinv, alphat(L)/dayinv
+     1      mdamp(l)/dayinv, alphaw(L)/dayinv, alphat(L)/dayinv, nudgefac(L)/dayinv
       ENDDO
       
       TSTEEP= 1.2 ! (never used anything else)
@@ -347,7 +365,7 @@ c     Background eddy diffusion and molecular diffusion profiles
 
 C     Write meta-data to Python output file
       OPEN(13, FILE=TRIM(OUTFOLD)//TRIM(OUTFILE),FORM='UNFORMATTED')
-      WRITE(13) K1, K2, M1, N1, L1, PBOT, PLID, DT1*NSKIP, NSTEP/NSKIP+1
+      WRITE(13) K1, K2, M1, N1, L1, PBOT, PLID, DT1*NSKIP, NSTEP/NSKIP+1, NTRACE
       WRITE(13) (PLV(I),I=1,L1)
       WRITE(13) (DEGLAT(I), I=1,K2)
       WRITE(13) (ZSTDLV(I)/1000.+ZBOT,I=1,NLEV)
@@ -359,7 +377,7 @@ C     Write meta-data to Python output file
       IF (CFF .EQ. 1) THEN
 C       Read in initial state if continue from file
         DO 110 L=1,NLEV
-          DO 110 IPGQ=JVOR,JPOT
+          DO 110 IPGQ=JVOR,JPOT ! NTRACE can be added here later
 	        READ(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
             READ(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX0)),N=0,NMAX0)
   110   CONTINUE
@@ -370,7 +388,7 @@ C       Read in initial state if continue from file
         CLOSE(11)
 
 C       Save the initial state
-        CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
+        CALL SPEWPY (PGQSP1, PSSP1, OUTFILE, NTRACE)
 
       ELSE
 C       Initialize temperature distribution, wind field and surface condtions
@@ -392,7 +410,7 @@ C       First time step
      1         TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
 
 C       Save the initial state
-        CALL SPEWPY (PGQSP0, PSSP0, OUTFILE)
+        CALL SPEWPY (PGQSP0, PSSP0, OUTFILE, NTRACE)
       ENDIF
 
 C     Initialize leap-frog time-stepping
@@ -410,6 +428,24 @@ C       ramp down robfac to avoid crashing soon after initialization
      
 c       solar declination for zhu heating
         DEC=ASIND(COS((-ABS(TIM/86400./30.5)+5.6)/6.*3.14159)*SIND(23.))
+
+C       introduce tracer field at model-step T_Tracer
+        if (IT .eq. T_Tracer) then ! this is now timestep...
+          write(*,*) 'introducing tracer field'
+          if (ntrace .gt. 0) then
+            do I=1,NTRACE
+              do L=30,60,1
+                do IPGQ=JTR1,JPOT+NTRACE
+                  TRC(:,:,I,L) = 400.
+                  CALL SPECTR( PGQSP0(0,0,IPGQ,L), TRC(:,:,I,L) )
+                  CALL SPCOPY( PGQSP1(0,0,IPGQ,L), PGQSP0(0,0,IPGQ,L), N1)
+                end do 
+              end do ! nlev
+            end do ! ntrace
+          end if 
+
+C           convert to spectral space and add to pgqsp
+        end if
       
 C       old robfil to damp physical mode after initialization to avoid crash
         IF (ROBRAMP .LT. ROBFAC + 0.01) THEN
@@ -421,7 +457,7 @@ C       old robfil to damp physical mode after initialization to avoid crash
         ENDIF
 
         IF (MOD(IT,NSKIP).EQ.0) THEN
-          CALL SPEWPY (PGQSP1, PSSP1, OUTFILE)
+          CALL SPEWPY (PGQSP1, PSSP1, OUTFILE, NTRACE)
         ENDIF
       ENDDO
 
@@ -434,7 +470,7 @@ c       iarg=iarg+1
         WRITE(11) MMAX,NMAX,NLEV,PBOT,PLID,TIM,DT1
 
         DO L=1,NLEV
-	      DO IPGQ=JVOR,JPOT
+	      DO IPGQ=JVOR,JPOT+NTRACE ! NTRACE can be added here later
             WRITE(11)((PGQSP0(M,N,IPGQ,L),M=0,MIN0(N,MMAX))
      1        ,N=0,NMAX)
             WRITE(11)((PGQSP1(M,N,IPGQ,L),M=0,MIN0(N,MMAX))
@@ -533,7 +569,7 @@ C     Make implicit corrections to tendency
 
 C     Leap-frog to next time-step
       DO 220 L=1,L1
-        DO 220 IPGQ=JVOR,JPOT
+        DO 220 IPGQ=JVOR,JPOT+NTRACE
           DO 210 N=0,N1
             DO 210 M=0,MIN0(N,M1),1
               FSP1(M,N)= PGQSP0(M,N,IPGQ,L)
@@ -663,7 +699,7 @@ C     Make implicit corrections to tendency
 
 C     Leap-frog to next time-step
       DO 220 L=1,L1
-        DO 220 IPGQ=JVOR,JPOT
+        DO 220 IPGQ=JVOR,JPOT+NTRACE
           DO 210 N=0,N1
             DO 210 M=0,MIN0(N,M1),1
               FSP1(M,N)= PGQSP0(M,N,IPGQ,L)
@@ -854,6 +890,8 @@ C     SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE)
 CC===========================================================
 CC     Write zonal and meridional wind, & vertical velocities,
 CC     geopotential, potential temperature, for Python I/O.
+C     
+C     This is the old version that writes spherical harmonics      
 C
 C     IMPLICIT NONE
 C
@@ -884,7 +922,7 @@ C
 C     END
 
 C===========================================================
-      SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE)
+      SUBROUTINE SPEWPY(PGQSP, PSSP, OUTFILE, NTRACE_OUT)
 C===========================================================
 C     Write zonal (ZW) and meridional wind (MW), 
 C     surf geopotential (GEOB), temperature (TPR), surf pres (PRS)
@@ -899,10 +937,11 @@ C     surf geopotential (GEOB), temperature (TPR), surf pres (PRS)
       COMPLEX PGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
       COMPLEX PSSP(0:M1MAX,0:N1MAX)
       COMPLEX FSP0(0:M1MAX,0:N1MAX),FSP1(0:M1MAX,0:N1MAX)
-      INTEGER M, N, L, IREC
+      INTEGER M, N, L, I, IREC, NTRACE_OUT
       
       REAL ZW(K1MAX,K2MAX,L1MAX), MW(K1MAX,K2MAX,L1MAX)
       REAL TPR(K1MAX,K2MAX,L1MAX)
+      real TRC(K1MAX,K2MAX,NTRACE_OUT,L1MAX)
       REAL PRS(K1MAX,K2MAX)
 
       REAL GEO(K2MAX)
@@ -914,14 +953,22 @@ C     surf geopotential (GEOB), temperature (TPR), surf pres (PRS)
       IREC=IREC+1
 	  WRITE(6,*) 'Writing Python record: ', IREC, ' to  ', OUTFILE
                
-      DO L=1,L1
+      do L=1,L1
 C...... compute streamfunction PSI and velocity potential CHI
         CALL IDELSQ( FSP0, PGQSP(0,0,JVOR,L), N1)
         CALL IDELSQ( FSP1, PGQSP(0,0,JDIV,L), N1)
 C.......transform to physical space
         CALL HVELOC( ZW(1,1,L), MW(1,1,L), FSP0, FSP1)
         CALL PHYSIC( TPR(1,1,L), PGQSP(0,0,JPOT,L))
-      ENDDO
+        
+C.......if tracers present, transform to physical space
+        if (NTRACE_OUT .gt. 0) then
+            do I=1,NTRACE_OUT
+                  CALL PHYSIC( TRC(1,1,I,L), PGQSP(0,0,JPOT+I,L))
+C                  TRC(:,:,I,L) = 0.
+            end do 
+        end if ! tracers
+      end do ! L
     
       CALL PHYSIC(PRS,PSSP)
       
@@ -930,5 +977,11 @@ C.......transform to physical space
       WRITE(13) (((TPR(M,N,L),M=1,K1),N=1,K2),L=1,L1)
       WRITE(13) ((PRS(M,N),M=1,K1),N=1,K2)
       WRITE(13) ((GEOB(M,N),M=1,K1),N=1,K2)
+
+      if (NTRACE_OUT .gt. 0) then
+            do I=1,NTRACE_OUT
+                  WRITE(13) (((TRC(M,N,I,L),M=1,K1),N=1,K2),L=1,L1)
+            end do 
+      end if ! tracers
       
       END

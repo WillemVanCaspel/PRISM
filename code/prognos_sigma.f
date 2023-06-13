@@ -514,8 +514,10 @@ C
       INTEGER LMHALF, LPZERO, LPHALF, LPONE
 C     (Mnemonic for L-(1/2), L+0, L+(1/2), L+1)
       INTEGER I, J, K, L, L0, M, N, IPGQ
-      REAL TRC(K1MAX, K2MAX, 0:1), VTRCFX(K1MAX, K2MAX, 0:1)
-      REAL TRCCAP(K1MAX, K2MAX)
+      INTEGER TDIM                   ! here represents tracer dim
+      PARAMETER (TDIM=MAX(1,NPGQ-3)) ! NPGQ currently hardcoded to 6
+      REAL TRC(K1MAX, K2MAX, TDIM, 0:1), VTRCFX(K1MAX, K2MAX, TDIM, 0:1) 
+      REAL TRCCAP(K1MAX, K2MAX, TDIM)
       REAL DAYINV, SURFD
       
       COMPLEX SURF1(0:100,0:100)
@@ -590,9 +592,9 @@ C       Compute "perturbation" temp at level L+1
            CALL PHYSIC( TP(1,1,LPONE), FSP1 )
 
 C       Compute tracer concentration in physical space (at level L+1)
-C           IF (NTRACE .GT. 0) THEN
-C              CALL PHYSIC( TRC(1,1,LPONE), PGQSP1(0,0,JTR1,L+1) )
-C           ENDIF
+           DO IPGQ=1,NTRACE
+              CALL PHYSIC(TRC(1,1,IPGQ,LPONE), PGQSP1(0,0,JTR1+IPGQ-1,L+1))
+           ENDDO
 C ----------------------------------------------------------------------
         ENDIF
 C
@@ -606,7 +608,8 @@ C         => All vertical fluxes are also zero
               W(J,K,LPHALF)= 0.0
               VTPFLX(J,K,LPHALF)= 0.0
 
-	      IF (NTRACE .GT. 0) VTRCFX(J,K,LPHALF)= 0.0
+              DO 110 IPGQ=1,NTRACE
+                VTRCFX(J,K,IPGQ,LPHALF)= 0.0
   110         CONTINUE
 
           DO 120 I=JX,JY
@@ -629,9 +632,9 @@ C         fluxes at level L+1/2.
               TPCAP(J,K) = 0.5 * ( TP(J,K,LPONE)/PKLV(L+1) 
      1                           - TP(J,K,LPZERO)/PKLV(L))
 
-	      IF (NTRACE .GT. 0)
-	1       TRCCAP(J,K)=   0.5 * ( TRC(J,K,LPONE) - TRC(J,K,LPZERO))
-  140         CONTINUE
+	        DO 140 IPGQ=1,NTRACE
+            TRCCAP(J,K,IPGQ)=0.5 * ( TRC(J,K,IPGQ,LPONE) - TRC(J,K,IPGQ,LPZERO))
+  140     CONTINUE
 
 C         Compute "pressure velocity" omega at L+1/2
           DO 150 K=1,K2
@@ -651,8 +654,8 @@ C         Compute vertical fluxes at level L+1/2
             DO 170 J=1,K1
               VTPFLX(J,K,LPHALF) = -W(J,K,LPHALF) * TPCAP(J,K)
 
-	      IF (NTRACE .GT. 0)
-	1       VTRCFX(J,K,LPHALF) = -W(J,K,LPHALF) * TRCCAP(J,K)
+          DO 170 IPGQ=1,NTRACE
+            VTRCFX(J,K,IPGQ,LPHALF) = -W(J,K,LPHALF) * TRCCAP(J,K,IPGQ)
   170         CONTINUE
 C ----------------------------------------------------------------------
         ENDIF
@@ -751,27 +754,26 @@ C ----------------------------------------------------------------------
 C         Compute tracer time tendency at level L
 C ----------------------------------------------------------------------
 C
-C	  IF (NTRACE .GT. 0) THEN
-
 C         Compute vertical tracer flux convergence
-C            TEMP= 1.0 / DP(L)
-C            DO 270 K=1,K2
-C              DO 270 J=1,K1
-C                FPH(J,K)= TEMP * (VTRCFX(J,K,LPHALF)+VTRCFX(J,K,LMHALF))
-C  270           CONTINUE
-C
+            TEMP= 1.0 / DP(L)
+
+            DO 285 IPGQ=1,NTRACE
+               DO 270 K=1,K2
+               DO 270 J=1,K1
+                  FPH(J,K)= TEMP * (VTRCFX(J,K,IPGQ,LPHALF)+VTRCFX(J,K,IPGQ,LMHALF))
+ 270           CONTINUE
+
 C         Add horizontal "flux" of tracer
-C          CALL GRAD (FLXPH(1,1,JX), FLXPH(1,1,JY), PGQSP1(0,0,JTR1,L))
-C
-C            DO 280 I=JX,JY
-C              DO 280 K=1,K2
-C                DO 280 J=1,K1
-C                  FPH(J,K)= FPH(J,K) - FLXPH(J,K,I) * U(J,K,I,L)
-C  280             CONTINUE
-C
+            CALL GRAD(FLXPH(1,1,JX), FLXPH(1,1,JY), PGQSP1(0,0,JTR1+IPGQ-1,L))
+
+            DO 280 I=JX,JY
+              DO 280 K=1,K2
+                DO 280 J=1,K1
+                  FPH(J,K)= FPH(J,K) - FLXPH(J,K,I) * U(J,K,I,L)
+  280             CONTINUE
+
 C         Convert to spectral space and add to temp tendency
-C            CALL SPECTR( DPGQSP(0,0,JTR1,L), FPH )
-C	  ENDIF
+ 285              CALL SPECTR( DPGQSP(0,0,JTR1+IPGQ-1,L), FPH ) 
 C ----------------------------------------------------------------------
         ENDIF
 C
@@ -821,14 +823,12 @@ C         Add Del**8 damping terms to VOR/DIV/POT tendencies
      1            - TD8FAC(N) * PGQSP0(M,N,JPOT,L)
   430       CONTINUE
 
-C	  IF (NTRACE .GT. 0) THEN
-C
 C         Add Del**8 damping term to tracer tendency
-C            DO 440 M=0,MIN0(N,M1)
-C              DPGQSP(M,N,JTR1,L)= DPGQSP(M,N,JTR1,L)
-C     1            - TD8FAC(N) * PGQSP0(M,N,JTR1,L)
-C  440         CONTINUE
-C	  ENDIF
+            DO 440 IPGQ=1,NTRACE
+               DO 440 M=0,MIN0(N,M1)
+                  DPGQSP(M,N,JTR1+IPGQ-1,L)= DPGQSP(M,N,JTR1+IPGQ-1,L)
+     1            - TD8FAC(N) * PGQSP0(M,N,JTR1+IPGQ-1,L)
+  440         CONTINUE
 
   500     CONTINUE
 
@@ -1059,6 +1059,11 @@ C     MLT nudging
               TEMPAW = ALPHAW(L)
             ENDIF
 
+            if (nudge_coeff .eq. 1) then 
+              TEMPAT = NudgeFac(L)
+              TEMPAW = NudgeFac(L)
+            end if
+
             IF (M .GT. SDTRUNC) THEN
                DAMPFAC = 0.
             ELSE
@@ -1114,6 +1119,11 @@ C     stratosphere nudging
               TEMPAT = ALPHAT(L)
               TEMPAW = ALPHAW(L)
             ENDIF
+
+            if (nudge_coeff .eq. 1) then
+              TEMPAT = NudgeFac(L)
+              TEMPAW = NudgeFac(L)
+            end if
             
             IF (M .GT. SDTRUNC) THEN
                DAMPFAC = 0.
@@ -1170,6 +1180,11 @@ C     troposphere nudging
               TEMPAT = ALPHAT(L)
               TEMPAW = ALPHAW(L)
             ENDIF
+
+            if (nudge_coeff .eq. 1) then
+              TEMPAT = NudgeFac(L)
+              TEMPAW = NudgeFac(L)
+            end if
                     
             IF (M .GT. SDTRUNC) THEN
                DAMPFAC = 0.
@@ -1334,7 +1349,7 @@ C
 
       COMPLEX DPGQSP(0:M1MAX,0:N1MAX,NPGQ,L1MAX)
       COMPLEX DPSSP(0:M1MAX,0:N1MAX)
-      INTEGER L0, L, M, N
+      INTEGER L0, L, M, N, IPGQ
       REAL RTEMP, RT
       COMPLEX TEM(0:M1MAX,L1MAX)
 
@@ -1387,12 +1402,10 @@ C         Make implicit correction due to Del**8 damping of temp
           DO 80 M=0,MIN0(N,M1)
    80       DPGQSP(M,N,JPOT,L)= TD8COR(N) * DPGQSP(M,N,JPOT,L)
 
-C	  IF (NTRACE .GT. 0) THEN
-C
 C         Make implicit correction due to Del**8 damping of tracer
-C            DO 90 M=0,MIN0(N,M1)
-C   90         DPGQSP(M,N,JTR1,L)= TD8COR(N) * DPGQSP(M,N,JTR1,L)
-C	  ENDIF
+          DO 90 IPGQ=1,NTRACE
+            DO 90 M=0,MIN0(N,M1)
+   90         DPGQSP(M,N,JTR1+IPGQ-1,L)=TD8COR(N) * DPGQSP(M,N,JTR1+IPGQ-1,L)
 
   100     CONTINUE
 

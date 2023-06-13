@@ -17,9 +17,9 @@ file = 'test2.dat'
 
 record = 1200
 
-uf, vf, tf, lats, lons, spres, geob = mf.read_uv_grid(file,
-                                                      folder,
-                                                      record)
+uf, vf, tf, lats, lons, spres, geob, tracers = mf.read_uv_grid(file,
+                                                               folder,
+                                                               record)
 
 # zonal mean and flip altitude
 field_1 = np.mean(uf[::-1,:,:],axis=2)

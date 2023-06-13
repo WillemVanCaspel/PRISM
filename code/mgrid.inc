@@ -77,3 +77,7 @@ C RMIN     -- minimum Richardson number for dry adjustment to kick in
      3  T2GPCP(L1MAX,L1MAX), NNT2DT(L1MAX,L1MAX),
      4  IMPCOR(L1MAX,L1MAX,0:N1MAX), RMIN(L1MAX)
 C
+      integer t_tracer
+      real Z_LBC, NudgeAmp, Z_LVL
+      integer nudge_coeff
+      real NudgeFac(L1MAX)
