@@ -87,7 +87,8 @@ C.....SPECTRUM PARAMS
 	REAL EPS(MAXK,K2MAX)		!INTERMITTENCY
 	INTEGER IZ0(MAXK,K2MAX)	!SOURCE GRID LEVEL
 	REAL TLEV(K2MAX)	!TURBOPAUSE HEIGHT
-
+        REAL CW                 !1/e-width of GW spectrum
+	
 C.....GW STUFF
 	REAL KH1(MAXA), KH2(MAXA)
 	REAL UCOMP(L1MAX)
@@ -419,6 +420,42 @@ C.....SET K1GW=-1,0 FOR NO GW FORCING
 	  READ(5,*) FLAG
 	  write(6,*) FLAG
 
+	  NC = 121 !# of wave packet
+          NAZ = 4  !# of azimuth
+	  NKH = 2  !# of GW zonal wavenumber
+          CW  = 47 !1/e-width of GW spectrum, unit: m/s
+	  DO I=1,NKH
+             DO J=1,K2
+               !ZG index is reversed in gwf.f
+               IZ0(I,J) = 131 - 117    !GW source level at 261 hPa = ~10 km alt
+               EPS(I,J) = 0.0005  !intermittency
+             END DO
+	  END DO 
+          DO J=1,K2
+	    TLEV(J) = 115. ! make a turbopause = 115 km
+            !invariant wavenumber = 2pi/500000m and 2pi/1000000m
+	    KH(1,J) = 2. * PI / 500000.
+            KH(2,J) = 2. * PI / 1000000.
+	  END DO
+          DO I=1,NC
+	    C0(I) = REAL(I)-1. ! define GW wave packet phase speed
+          END DO
+          DO I=1,NC
+            DO J=1,NAZ
+	      DO K=1,NKH
+                DO L=1,K2
+		  B0(I,J,K,L) = 0.004 * EXP(-(C0(I)/CW)**2) #define GW source amp.
+                END DO
+	      END DO
+            END DO
+	  END DO
+   
+          #DEFINE azimuth direction for gw propagation
+          DO IAZ=1,NAZ
+	    DAZ=360./NAZ*(IAZ-1)
+            KH1(IAZ)=COSD(DAZ)
+	    KH2(IAZ)=SIND(DAZ)
+          END DO
 C.....GW PARAMS FROM FILE
 c	  CALL GETARG(IARG,ARG)	!CONTINUE RUN FROM THIS FILE
 c	  OPEN(UNIT=33,STATUS='OLD',FILE=ARG(1:(INDEX(ARG,' ')-1)), SHARED)
