@@ -35,14 +35,17 @@ F90FLAGS = -fdec-math -fno-automatic -fdec -ffree-line-length-256 -ffixed-line-l
 
 LDFLAGS = $(F90FLAGS) $(LLIB) -o $(PROG) $(FOBJ) $(INCL) $(LIBS)
 
-.SUFFIXES: $(SUFFIXES)  .f 
+.SUFFIXES: $(SUFFIXES)  .f .f90
+
+.f90.o:
+	$(F90) $(F90FLAGS) $(INCL) -c $<
 
 .f.o:
 	$(F90) $(F90FLAGS) $(INCL) -c $<
 
 all:  $(PROG)
 
-# Include the dependency-list (created by makedepf90)
+# Include the dependency-list (created by $ makedepf90 *.f* > dependencies)
 include dependencies
 
 $(PROG): $(FOBJ)

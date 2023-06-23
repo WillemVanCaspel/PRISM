@@ -3,6 +3,8 @@ C     ===========================================================
 C     ===========================================================
 C     SIGMA-COORDINATE PRIMITIVE EQUATION MODEL DRIVER 
 
+      use Config_mod
+
       IMPLICIT NONE
 
       INCLUDE 'mcons.inc'
@@ -104,7 +106,9 @@ C     ================================================================
       WRITE(6,*) 'SURF GEOP:    ', SURFFILE
       WRITE(6,*) 'TIDE FORC:    ', TIDEFILE
       WRITE(6,*) 'OUTPUT:       ', OUTFILE
-      
+
+      call Config_Constants()
+
       CALL CPU_TIME(cpt1)
       CALL GETTIM(ihr1,imin1,isec1,ihs1)
 

@@ -444,13 +444,13 @@ C.....SET K1GW=-1,0 FOR NO GW FORCING
             DO J=1,NAZ
 	      DO K=1,NKH
                 DO L=1,K2
-		  B0(I,J,K,L) = 0.004 * EXP(-(C0(I)/CW)**2) #define GW source amp.
+		  B0(I,J,K,L) = 0.004 * EXP(-(C0(I)/CW)**2) !#define GW source amp.
                 END DO
 	      END DO
             END DO
 	  END DO
    
-          #DEFINE azimuth direction for gw propagation
+          !#DEFINE azimuth direction for gw propagation
           DO IAZ=1,NAZ
 	    DAZ=360./NAZ*(IAZ-1)
             KH1(IAZ)=COSD(DAZ)

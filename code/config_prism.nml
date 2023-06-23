@@ -1,0 +1,7 @@
+&Model_config
+  ! test
+  INPATH           = '/home/wim/Desktop/PRISM_f90/input/',
+  OUTPATH          = '/home/wim/Desktop/PRISM_f90/output/',
+  GRIDP            = 'ERAn_Pgrid.dat',
+  GRIDZ            = 'ERAn_Zgrid.dat'
+&end
