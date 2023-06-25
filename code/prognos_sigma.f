@@ -907,7 +907,7 @@ C     Convert to physical space
       END
  
 C========================================================================
-      SUBROUTINE DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS)
+      SUBROUTINE DDTFRC( DPGQSP, PGQSP0, TIM, EDDIF, ZS)
 C========================================================================
 C     DDTFRC adds forcing/damping terms to the spectral time tendency DPGQSP
 C     (A call to DDTFRC, if any, should immediately follow the call to
@@ -971,7 +971,7 @@ C             treatment is explicit in time. Numerical instabilities otherwise.
       REAL KZZTIM, B1, B2, B3, B4, B5, B6, B7, B8, B9, KZZPHASE
       REAL RHO, MOL, CONVFAC, GAUSS
       
-      REAL TIM, RAYFAC ! dummies to make driver compatible with other versions of DDTFRC
+      REAL TIM ! dummies to make driver compatible with other versions of DDTFRC
       
 C======================================================================================================================
 C     Nudging to assimilated files, Newtonian cooling, and Rayleigh friction damping terms. 

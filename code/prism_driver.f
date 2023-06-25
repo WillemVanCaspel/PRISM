@@ -69,7 +69,7 @@ C     SIGMA-COORDINATE PRIMITIVE EQUATION MODEL DRIVER
 
 C     Damping and clamping coefficient profiles
       REAL WDAMP(L1MAX), MDAMP(L1MAX), TDIFF(L1MAX)
-      REAL ALPHAT(L1MAX), ALPHAW(L1MAX), RAYFAC
+      REAL ALPHAT(L1MAX), ALPHAW(L1MAX)
       INTEGER SDTRUNC, DAMPTRUNC, RECLEN
       COMMON /WAVD/ WDAMP, MDAMP, TDIFF, ALPHAT, ALPHAW, SDTRUNC, DAMPTRUNC
 
@@ -139,7 +139,7 @@ c     DZ0 and DELZ can be the same.  Set Dz0=0 for NCEP grid up to 30 km
       TIME0 = TIM
 
       WRITE(6,*) 'HORIZONTAL TRUNCATION: MMAX, NMAX:'
-      READ(5,*)  MMAX, NMAX, RAYFAC
+      READ(5,*)  MMAX, NMAX
       WRITE(6,*)  MMAX, NMAX
       NMAX = MIN(NMAX,N1MAX-1)
 
@@ -411,7 +411,7 @@ C       Initialize backward scheme for first time-step
 
 C       First time step
         CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, .5*DT1, 0., 
-     1         TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+     1         TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, EDDIF, ZS)
 
 C       Save the initial state
         CALL SPEWPY (PGQSP0, PSSP0, OUTFILE, NTRACE)
@@ -448,10 +448,10 @@ C       introduce tracer field at model-step T_Tracer
 C       old robfil to damp physical mode after initialization to avoid crash
         IF (ROBRAMP .LT. ROBFAC + 0.01) THEN
           CALL TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, 
-     1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+     1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, EDDIF, ZS)
         ELSE
           CALL TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBRAMP, 
-     1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC, EDDIF, ZS)
+     1      TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, EDDIF, ZS)
         ENDIF
 
         IF (MOD(IT,NSKIP).EQ.0) THEN
@@ -502,7 +502,7 @@ c       iarg=iarg+1
       END
 
 C     ===================================================
-      SUBROUTINE TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC,
+      SUBROUTINE TIME_STEP (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, 
      1                      EDDIF, ZS)
 C     ===================================================
       IMPLICIT NONE
@@ -525,7 +525,7 @@ C     ===================================================
       
       REAL EDDIF, ZS(L1MAX)
 
-      REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
+      REAL WATERCOEFF, OZONECOEFF, MESOCOEFF
       INTEGER TROPINDEX, STRATINDEX
       INTEGER L, M, N, IPGQ
       
@@ -544,7 +544,7 @@ C     Compute leap-frog "adiabatic" time tendency
       CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
 
 C     Include effects of forcing/damping
-      CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
+      CALL DDTFRC( DPGQSP, PGQSP0, TIM, EDDIF, ZS )
 
 C     Include bottom boundary, mechanical & thermal, GW forcing
       CALL FORCING(DPGQSP, PGQSP1, TIM)
@@ -640,7 +640,7 @@ C     Apply Robert filter
       END
 
 C     ===================================================
-      SUBROUTINE TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, RAYFAC,
+      SUBROUTINE TIME_STEP_INIT (PGQSP0, PGQSP1, PSSP0, PSSP1, TIM, DT1, ROBFAC, TRMM, TIDE, ERATIDE, WATERCOEFF, OZONECOEFF, MESOCOEFF, TROPINDEX, STRATINDEX, 
      1                           EDDIF, ZS)
 C     ===================================================
       IMPLICIT NONE
@@ -660,7 +660,7 @@ C     ===================================================
       REAL TIM, DT1, ROBFAC
       INTEGER TRMM, TIDE, ERATIDE
 
-      REAL WATERCOEFF, OZONECOEFF, MESOCOEFF, RAYFAC
+      REAL WATERCOEFF, OZONECOEFF, MESOCOEFF
       INTEGER TROPINDEX, STRATINDEX
       INTEGER L, M, N, IPGQ
       
@@ -674,7 +674,7 @@ C     Compute leap-frog "adiabatic" time tendency
       CALL DDTPGQ( DPGQSP, DPSSP, PGQSP0, PGQSP1, PSSP0, PSSP1 )
 
 C     Include effects of forcing/damping
-      CALL DDTFRC( DPGQSP, PGQSP0, TIM, RAYFAC, EDDIF, ZS )
+      CALL DDTFRC( DPGQSP, PGQSP0, TIM, EDDIF, ZS )
 
 C     Include bottom boundary, mechanical & thermal, GW forcing
       CALL FORCING(DPGQSP, PGQSP1, TIM)
