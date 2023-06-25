@@ -9,7 +9,7 @@ module Config_mod
      INPATH     = 'NOTSET' &
     ,OUTPATH    = 'NOTSET' & ! can be changed to local folder later on
 
-    ! file names for tidal heating, background atmosphere, and ocean tides
+    ! file names for tidal heating, background atmosphere, and ocean tides in INPATH
     ,TIDEHEAT   = 'NOTSET' &
     ,ATMOSPHERE = 'NOTSET' &
     ,OCEANTIDE  = 'NOTSET' &
@@ -24,8 +24,7 @@ module Config_mod
     ,TEMPINIT   = 'NOTSET' 
   
   logical, public, save :: &   
-    ! flags controlling final output dump for continuation,
-    ! and start from continuation file
+    ! flags controlling final output dump, and start from continuation file
      write_continuation     = .false. &
     ,start_continuation     = .false.
 
@@ -35,7 +34,23 @@ module Config_mod
     ,zlid_conf = 170. & ! 
     ,dz0_conf  = 0.   &
     ,delz_conf = 0.   &
-    ,zlow_conf = 0.      
+    ,zlow_conf = 0.     
+    
+  real, public, save :: &
+    ! time resolution and run time config
+     model_dt = 0.2   & ! time step in hours
+    ,runtime  = 161.  & ! total run time in days
+    ,dt_out   = 1.0   & ! time resolution output (hrs)
+    ,start_t  = 0.      ! start time (doy)
+
+  ! meridional legendre polynom. (ntrunc) and zonal wave nr. (mtrunc) spectral resolution
+  integer, public, save :: ntrunc = 3, mtrunc = 16
+
+  ! to-do, get rid of ray-fac
+
+  ! make stratosphere and mesosphere limits pressure-dependent
+
+     
 
   public :: Config_Constants
 
